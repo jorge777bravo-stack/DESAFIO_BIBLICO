@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Flame, Scroll, Crown, Trophy, ChevronRight, RotateCcw, Play, Sparkles,
-  Sailboat, Tent, Star, Users, BookOpen, Lock, Coins, Gem, X, Gift, ShoppingBag, Check
+  Sailboat, Tent, Star, Users, BookOpen, Lock, Coins, Gem, X, Gift, ShoppingBag, Check,
+  Volume2, VolumeX
 } from "lucide-react";
+import {
+  loadMutePref, isMuted, toggleMuted,
+  playClick, playCorrect, playWrong, playLevelComplete, playGameOver, playCoin
+} from "./sound";
 
 /* ------------------------------------------------------------------ */
 /* DATA — 8 niveles, cada uno un gran tramo de la historia bíblica     */
@@ -882,7 +887,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 /* TOP BAR — cabecera consistente de marca                             */
 /* ------------------------------------------------------------------ */
 
-function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOpenPremium }) {
+function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOpenPremium, soundMuted, onToggleMute }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 640, margin: "0 auto", padding: "0 4px 8px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -892,6 +897,20 @@ function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOp
         <span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#C7BBA0" }}>DESAFÍO BÍBLICO</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {onToggleMute && (
+          <button
+            onClick={onToggleMute}
+            aria-label={soundMuted ? "Activar sonido" : "Silenciar sonido"}
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 30, height: 30, borderRadius: "50%",
+              background: "rgba(237,227,205,.06)", border: "1px solid rgba(237,227,205,.15)",
+              cursor: "pointer", color: "#9C927B",
+            }}
+          >
+            {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
+        )}
         {!isPremium && onOpenPremium && (
           <button
             onClick={onOpenPremium}
@@ -955,7 +974,7 @@ function Backdrop({ children }) {
   );
 }
 
-function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQuestions, canClaimDaily, onOpenDaily }) {
+function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQuestions, canClaimDaily, onOpenDaily, soundMuted, onToggleMute }) {
   return (
     <div style={{ minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, opacity: 0.9 }}>
@@ -963,7 +982,7 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
       </div>
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ paddingTop: 20 }}>
-          <TopBar coins={coins} onOpenShop={onOpenShop} isPremium={isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} />
+          <TopBar coins={coins} onOpenShop={onOpenShop} isPremium={isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px 60px", textAlign: "center", minHeight: "calc(100vh - 56px)" }}>
           <div style={{ width: 78, height: 78, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, boxShadow: "0 8px 28px rgba(201,162,39,.4), inset 0 2px 4px rgba(255,255,255,.4)" }}>
@@ -978,7 +997,7 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
             y estampa tu sello en cada respuesta.
           </p>
           <button
-            onClick={onStart}
+            onClick={() => { playClick(); onStart(); }}
             style={{ marginTop: 34, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 16, letterSpacing: "0.06em", fontWeight: 600, padding: "14px 32px", borderRadius: 999, border: "none", cursor: "pointer", boxShadow: "0 10px 26px rgba(201,162,39,.35)" }}
           >
             <Play size={18} fill="#241D0C" /> COMENZAR
@@ -990,11 +1009,11 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
   );
 }
 
-function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, onOpenDaily }) {
+function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, onOpenDaily, soundMuted, onToggleMute }) {
   const clearedCount = Object.keys(progress.completed).length;
   return (
     <div style={{ minHeight: "100vh", padding: "22px 18px 60px" }}>
-      <TopBar coins={progress.coins} onOpenShop={onOpenShop} isPremium={progress.isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} />
+      <TopBar coins={progress.coins} onOpenShop={onOpenShop} isPremium={progress.isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} />
 
       <div style={{ maxWidth: 640, margin: "6px auto 26px" }}>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: "clamp(22px, 4.5vw, 30px)", color: "#F2E6C9" }}>Mapa de niveles</div>
@@ -1013,7 +1032,7 @@ function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, 
             <button
               key={cat.id}
               disabled={!unlocked}
-              onClick={() => unlocked && onPick(cat, i)}
+              onClick={() => { if (unlocked) { playClick(); onPick(cat, i); } }}
               style={{
                 textAlign: "left", position: "relative", overflow: "hidden",
                 borderRadius: 14, padding: "22px 20px", cursor: unlocked ? "pointer" : "not-allowed",
@@ -1112,6 +1131,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
       const newCoins = coinsEarned + (isCorrect ? COINS_PER_CORRECT : 0);
       const newLives = isCorrect ? lives : lives - 1;
 
+      isCorrect ? playCorrect() : playWrong();
       setStatus(isCorrect ? "correct" : "wrong");
       setStreak(newStreak);
       setScore(newScore);
@@ -1322,10 +1342,10 @@ function Results({ result, unlockedNext, onRestart, onMenu }) {
       {!(won && unlockedNext) && <div style={{ marginBottom: 24 }} />}
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={onRestart} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "none", cursor: "pointer" }}>
+        <button onClick={() => { playClick(); onRestart(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "none", cursor: "pointer" }}>
           <RotateCcw size={16} /> JUGAR DE NUEVO
         </button>
-        <button onClick={onMenu} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: "#EDE3CD", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(237,227,205,.35)", cursor: "pointer" }}>
+        <button onClick={() => { playClick(); onMenu(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: "#EDE3CD", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(237,227,205,.35)", cursor: "pointer" }}>
           MAPA DE NIVELES
         </button>
       </div>
@@ -1350,10 +1370,12 @@ export default function DesafioBiblico() {
   const [purchaseTarget, setPurchaseTarget] = useState(null); // null | { type: "premium" } | { type: "coins", pkg }
   const [shopInitial, setShopInitial] = useState(null); // { tab, suggestedPkgId, origin } | null
   const [lastPurchaseAt, setLastPurchaseAt] = useState(0); // ticks on every completed purchase, lets Shop react to its own outcome
+  const [soundMuted, setSoundMuted] = useState(false);
 
   const [progress, setProgress] = useState({ ...DEFAULT_PROGRESS });
 
   useEffect(() => {
+    setSoundMuted(loadMutePref());
     (async () => {
       const p = await loadProgress();
       setProgress(p);
@@ -1363,6 +1385,10 @@ export default function DesafioBiblico() {
       }
     })();
   }, []);
+
+  function handleToggleMute() {
+    setSoundMuted(toggleMuted());
+  }
 
   function persist(next) {
     setProgress(next);
@@ -1374,6 +1400,7 @@ export default function DesafioBiblico() {
     const idx = categoryIdx;
     const perfect = won && res.lives === LIVES_START;
     const perfectBonus = perfect ? COINS_PERFECT_BONUS : 0;
+    won ? playLevelComplete() : playGameOver();
     setResult({ ...res, perfectBonus });
     const next = {
       ...progress,
@@ -1408,6 +1435,7 @@ export default function DesafioBiblico() {
     const isConsecutive = progress.lastClaimDate === yesterdayStr();
     const newStreak = isConsecutive ? progress.dailyStreak + 1 : 1;
     const reward = DAILY_REWARDS[(newStreak - 1) % DAILY_REWARDS.length];
+    playCoin();
     persist({ ...progress, coins: progress.coins + reward, dailyStreak: newStreak, lastClaimDate: todayStr() });
     setShowDaily(false);
   }
@@ -1474,6 +1502,8 @@ export default function DesafioBiblico() {
           totalQuestions={CATEGORIES.reduce((sum, c) => sum + c.questions.length, 0)}
           canClaimDaily={canClaimDaily}
           onOpenDaily={() => setShowDaily(true)}
+          soundMuted={soundMuted}
+          onToggleMute={handleToggleMute}
         />
       )}
 
@@ -1484,6 +1514,8 @@ export default function DesafioBiblico() {
           onOpenPremium={openPremiumShop}
           canClaimDaily={canClaimDaily}
           onOpenDaily={() => setShowDaily(true)}
+          soundMuted={soundMuted}
+          onToggleMute={handleToggleMute}
           onPick={(cat, i) => {
             setCategory(cat);
             setCategoryIdx(i);
@@ -1537,7 +1569,7 @@ export default function DesafioBiblico() {
         <AdModal
           onClose={() => setShopAd(false)}
           rewardLabel="¡Ganaste 30 monedas!"
-          onReward={() => { persist({ ...progress, coins: progress.coins + 30 }); setShopAd(false); }}
+          onReward={() => { playCoin(); persist({ ...progress, coins: progress.coins + 30 }); setShopAd(false); }}
         />
       )}
 
