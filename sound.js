@@ -2,6 +2,7 @@
 /* MOTOR DE SONIDO — efectos sintetizados con Web Audio API            */
 /* No requiere archivos de audio externos: todo se genera en el       */
 /* navegador del usuario, así que funciona igual en local y en Vercel. */
+/* Efectos reforzados: más volumen, capas y "punch" para enganchar.    */
 /* ------------------------------------------------------------------ */
 
 const MUTE_KEY = "db_sound_muted_v1";
@@ -52,7 +53,7 @@ export function toggleMuted() {
 /**
  * Reproduce un tono simple con envolvente (ataque rápido, caída exponencial).
  */
-function tone({ freq = 440, duration = 0.15, type = "sine", gain = 0.18, delay = 0, glideTo = null }) {
+function tone({ freq = 440, duration = 0.15, type = "sine", gain = 0.18, delay = 0, glideTo = null, pan = 0 }) {
   if (muted) return;
   const audio = getCtx();
   if (!audio) return;
@@ -71,41 +72,138 @@ function tone({ freq = 440, duration = 0.15, type = "sine", gain = 0.18, delay =
   amp.gain.linearRampToValueAtTime(gain, t0 + 0.012);
   amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
 
+  if (audio.createStereoPanner && pan !== 0) {
+    const panner = audio.createStereoPanner();
+    panner.pan.setValueAtTime(pan, t0);
+    amp.connect(panner);
+    panner.connect(audio.destination);
+  } else {
+    amp.connect(audio.destination);
+  }
+
   osc.connect(amp);
-  amp.connect(audio.destination);
   osc.start(t0);
   osc.stop(t0 + duration + 0.03);
 }
 
-/** Clic suave para navegación y botones. */
+/** Ráfaga de ruido blanco con envolvente — da "punch" percusivo a los golpes de efecto. */
+function noiseBurst({ duration = 0.18, gain = 0.16, delay = 0, filterFreq = 1800, type = "highpass" }) {
+  if (muted) return;
+  const audio = getCtx();
+  if (!audio) return;
+
+  const t0 = audio.currentTime + delay;
+  const bufferSize = Math.max(1, Math.floor(audio.sampleRate * duration));
+  const buffer = audio.createBuffer(1, bufferSize, audio.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+  }
+
+  const src = audio.createBufferSource();
+  src.buffer = buffer;
+
+  const filter = audio.createBiquadFilter();
+  filter.type = type;
+  filter.frequency.setValueAtTime(filterFreq, t0);
+
+  const amp = audio.createGain();
+  amp.gain.setValueAtTime(0, t0);
+  amp.gain.linearRampToValueAtTime(gain, t0 + 0.008);
+  amp.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+
+  src.connect(filter);
+  filter.connect(amp);
+  amp.connect(audio.destination);
+  src.start(t0);
+  src.stop(t0 + duration + 0.02);
+}
+
+/** Clic firme para navegación y botones — con leve golpe percusivo. */
 export function playClick() {
-  tone({ freq: 700, duration: 0.055, type: "square", gain: 0.05 });
+  tone({ freq: 760, duration: 0.06, type: "square", gain: 0.11 });
+  noiseBurst({ duration: 0.04, gain: 0.06, filterFreq: 3200 });
 }
 
-/** Respuesta correcta: arpegio ascendente y brillante. */
+/** Respuesta correcta: arpegio ascendente brillante + brillo de campana + chispa de ruido. */
 export function playCorrect() {
-  tone({ freq: 523.25, duration: 0.12, type: "sine", gain: 0.16 });
-  tone({ freq: 659.25, duration: 0.14, type: "sine", gain: 0.16, delay: 0.09 });
-  tone({ freq: 783.99, duration: 0.2, type: "sine", gain: 0.16, delay: 0.18 });
+  [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) =>
+    tone({ freq: f, duration: 0.22, type: "triangle", gain: 0.26, delay: i * 0.075 })
+  );
+  tone({ freq: 1567.98, duration: 0.35, type: "sine", gain: 0.16, delay: 0.32 });
+  noiseBurst({ duration: 0.12, gain: 0.12, delay: 0.02, filterFreq: 4500 });
 }
 
-/** Respuesta incorrecta: tono descendente grave. */
+/** Respuesta incorrecta: golpe grave + descenso disonante — impacto contundente. */
 export function playWrong() {
-  tone({ freq: 200, duration: 0.24, type: "sawtooth", gain: 0.13, glideTo: 110 });
+  tone({ freq: 180, duration: 0.32, type: "sawtooth", gain: 0.24, glideTo: 70 });
+  tone({ freq: 140, duration: 0.28, type: "square", gain: 0.14, delay: 0.03, glideTo: 55 });
+  noiseBurst({ duration: 0.22, gain: 0.18, filterFreq: 500, type: "lowpass" });
 }
 
-/** Nivel completado: fanfarria corta ascendente. */
+/** Nivel completado: fanfarria ascendente con capas y remate brillante. */
 export function playLevelComplete() {
-  [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
-    tone({ freq: f, duration: 0.3, type: "triangle", gain: 0.15, delay: i * 0.12 })
+  [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) =>
+    tone({ freq: f, duration: 0.34, type: "triangle", gain: 0.22, delay: i * 0.1 })
+  );
+  [523.25, 659.25, 783.99].forEach((f) => tone({ freq: f, duration: 0.6, type: "sine", gain: 0.09, delay: 0.5 }));
+  noiseBurst({ duration: 0.3, gain: 0.14, delay: 0.05, filterFreq: 5000 });
+}
+
+/** Fin de partida sin completar el nivel: descenso apagado y grave. */
+export function playGameOver() {
+  [392, 349.23, 293.66, 220, 164.81].forEach((f, i) =>
+    tone({ freq: f, duration: 0.38, type: "sawtooth", gain: 0.18, delay: i * 0.16 })
   );
 }
 
-/** Fin de partida sin completar el nivel: descenso apagado. */
-export function playGameOver() {
-  [392, 349.23, 293.66, 220].forEach((f, i) =>
-    tone({ freq: f, duration: 0.32, type: "sine", gain: 0.14, delay: i * 0.15 })
-  );
+/** Monedas ganadas (recompensa diaria, compra, anuncio, respuestas correctas). */
+export function playCoin() {
+  tone({ freq: 988, duration: 0.09, type: "square", gain: 0.15 });
+  tone({ freq: 1318.5, duration: 0.18, type: "square", gain: 0.15, delay: 0.06 });
+  tone({ freq: 1760, duration: 0.14, type: "sine", gain: 0.1, delay: 0.11 });
+}
+
+/** Racha activa: destello ascendente corto y agudo. */
+export function playStreak() {
+  [880, 1108.73, 1396.91].forEach((f, i) => tone({ freq: f, duration: 0.1, type: "sine", gain: 0.14, delay: i * 0.05 }));
+}
+
+/** Tic-tac urgente cuando el tiempo se agota (últimos segundos). */
+export function playTick() {
+  tone({ freq: 1200, duration: 0.05, type: "square", gain: 0.1 });
+}
+
+/** Power-up: Pista — sonido de "idea" mágico, ascendente y curioso. */
+export function playHint() {
+  tone({ freq: 660, duration: 0.1, type: "sine", gain: 0.16 });
+  tone({ freq: 990, duration: 0.14, type: "sine", gain: 0.16, delay: 0.08 });
+  tone({ freq: 1320, duration: 0.2, type: "triangle", gain: 0.14, delay: 0.16 });
+}
+
+/** Power-up: Proteger vida — escudo grave y metálico con brillo protector. */
+export function playShield() {
+  tone({ freq: 220, duration: 0.22, type: "square", gain: 0.15 });
+  tone({ freq: 440, duration: 0.28, type: "sine", gain: 0.18, delay: 0.05 });
+  noiseBurst({ duration: 0.1, gain: 0.09, delay: 0.04, filterFreq: 2600 });
+}
+
+/** Power-up: Tiempo extra — reloj acelerado que se estira, alivio sonoro. */
+export function playTimeBonus() {
+  tone({ freq: 500, duration: 0.16, type: "sine", gain: 0.15, glideTo: 900 });
+  tone({ freq: 750, duration: 0.18, type: "triangle", gain: 0.14, delay: 0.1, glideTo: 1200 });
+}
+
+/** Power-up: Saltar pregunta — swoosh rápido de ruido filtrado. */
+export function playSkip() {
+  noiseBurst({ duration: 0.2, gain: 0.16, filterFreq: 2200 });
+  tone({ freq: 500, duration: 0.14, type: "sine", gain: 0.12, glideTo: 1000, delay: 0.02 });
+}
+
+/** Aviso de power-up no disponible (sin monedas suficientes). */
+export function playDenied() {
+  tone({ freq: 220, duration: 0.14, type: "square", gain: 0.12 });
+  tone({ freq: 160, duration: 0.16, type: "square", gain: 0.12, delay: 0.09 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -229,10 +327,3 @@ export function toggleMusicEnabled() {
   setMusicEnabled(!musicEnabled);
   return musicEnabled;
 }
-
-/** Monedas ganadas (recompensa diaria, compra, anuncio). */
-export function playCoin() {
-  tone({ freq: 988, duration: 0.08, type: "square", gain: 0.1 });
-  tone({ freq: 1318.5, duration: 0.16, type: "square", gain: 0.1, delay: 0.06 });
-}
-

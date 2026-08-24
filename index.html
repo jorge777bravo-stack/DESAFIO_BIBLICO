@@ -6,9 +6,40 @@
     <title>Desafío Bíblico</title>
     <meta name="description" content="Trivia bíblica: 8 niveles, 80 preguntas, de la Creación a Apocalipsis." />
     <meta name="theme-color" content="#2c2015" />
+
+    <!-- PWA: instalación como app -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Desafío Bíblico" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!--
+      ANUNCIOS (AdSense) — descomenta esta línea cuando tu sitio ya esté
+      aprobado en https://adsense.google.com y reemplaza ca-pub-XXXXXXXXXXXXXXX
+      por tu ID real de editor.
+    -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
   </head>
   <body style="margin: 0;">
     <div id="root"></div>
     <script type="module" src="/main.jsx"></script>
+
+    <!-- Registro del Service Worker para que el navegador ofrezca "Instalar app" -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch((err) => {
+            console.warn("No se pudo registrar el service worker:", err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

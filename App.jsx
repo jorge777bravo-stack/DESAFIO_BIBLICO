@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Flame, Scroll, Crown, Trophy, ChevronRight, RotateCcw, Play, Sparkles,
   Sailboat, Tent, Star, Users, BookOpen, Lock, Coins, Gem, X, Gift, ShoppingBag, Check,
-  Volume2, VolumeX, Music
+  Volume2, VolumeX, Music, Clock, Lightbulb, Shield, FastForward
 } from "lucide-react";
 import {
   loadMutePref, isMuted, toggleMuted,
   playClick, playCorrect, playWrong, playLevelComplete, playGameOver, playCoin,
-  loadMusicPref, isMusicEnabled, toggleMusicEnabled, startMusic, stopMusic
+  loadMusicPref, isMusicEnabled, toggleMusicEnabled, startMusic, stopMusic,
+  playStreak, playTick, playHint, playShield, playTimeBonus, playSkip, playDenied
 } from "./sound";
 
 /* ------------------------------------------------------------------ */
@@ -223,6 +224,13 @@ const COINS_PER_CORRECT = 10;
 const REVIVE_COST_COINS = 60;
 const COINS_LEVEL_CLEAR = 50;
 const COINS_PERFECT_BONUS = 25;
+
+/* Power-ups: costo en monedas por uso, consumibles durante una pregunta */
+const POWERUP_HINT_COST = 40;
+const POWERUP_SHIELD_COST = 55;
+const POWERUP_TIME_COST = 35;
+const POWERUP_SKIP_COST = 70;
+const POWERUP_TIME_BONUS = 10; // segundos que suma "Tiempo extra"
 const PROGRESS_KEY = "db_progress_v1";
 const DAILY_REWARDS = [15, 20, 25, 35, 45, 60, 100];
 
@@ -290,10 +298,11 @@ async function saveProgress(data) {
   }
 }
 
-function LampLife({ lit }) {
+function LampLife({ lit, small = false }) {
+  const size = small ? 15 : 22;
   return (
-    <div style={{ width: 22, height: 22, opacity: lit ? 1 : 0.25, filter: lit ? "drop-shadow(0 0 6px #F0C869)" : "none", transition: "opacity .4s ease" }}>
-      <Flame size={22} color={lit ? "#F0C869" : "#5b5346"} fill={lit ? "#E29A3C" : "none"} />
+    <div style={{ width: size, height: size, opacity: lit ? 1 : 0.25, filter: lit ? "drop-shadow(0 0 6px #F0C869)" : "none", transition: "opacity .4s ease" }}>
+      <Flame size={size} color={lit ? "#F0C869" : "#5b5346"} fill={lit ? "#E29A3C" : "none"} />
     </div>
   );
 }
@@ -436,7 +445,7 @@ function WaxSeal({ status, theme }) {
           border: "3px solid rgba(240,200,105,.55)",
         }}
       >
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, letterSpacing: "0.08em", color: "#F2E6C9", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,.6)", textAlign: "center", lineHeight: 1.3 }}>
+        <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 15, letterSpacing: "0.08em", color: "#F2E6C9", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,.6)", textAlign: "center", lineHeight: 1.3 }}>
           {isCorrect ? "Verdad" : "Errado"}
         </span>
       </div>
@@ -447,22 +456,6 @@ function WaxSeal({ status, theme }) {
 /* ------------------------------------------------------------------ */
 /* COIN PILL + AD MODAL (monetización)                                 */
 /* ------------------------------------------------------------------ */
-
-function CoinPill({ coins, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 6,
-        background: "rgba(240,200,105,.12)", border: "1px solid rgba(240,200,105,.4)",
-        borderRadius: 999, padding: "6px 12px", cursor: "pointer",
-        fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#F0C869",
-      }}
-    >
-      <Coins size={14} /> {coins}
-    </button>
-  );
-}
 
 function AdModal({ onClose, onReward, rewardLabel }) {
   const [seconds, setSeconds] = useState(2);
@@ -485,7 +478,7 @@ function AdModal({ onClose, onReward, rewardLabel }) {
             <X size={18} />
           </button>
         )}
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
           ANUNCIO RECOMPENSADO · DEMO
         </div>
         {!done ? (
@@ -501,7 +494,7 @@ function AdModal({ onClose, onReward, rewardLabel }) {
             <p style={{ color: "#EDE3CD", fontSize: 15, marginBottom: 18 }}>{rewardLabel}</p>
             <button
               onClick={onReward}
-              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
+              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
             >
               RECLAMAR
             </button>
@@ -529,7 +522,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
         <div style={{ width: 60, height: 60, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "4px auto 14px", boxShadow: "0 8px 22px rgba(201,162,39,.4)" }}>
           <Gift size={26} color="#241D0C" />
         </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#F2E6C9", marginBottom: 6 }}>Bendición diaria</div>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 18, color: "#F2E6C9", marginBottom: 6 }}>Bendición diaria</div>
         <p style={{ color: "#9C927B", fontSize: 13.5, marginBottom: 20, lineHeight: 1.5 }}>Regresa cada día para hacer crecer tu racha y ganar más monedas.</p>
 
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 22 }}>
@@ -547,7 +540,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
                   opacity: isPast ? 0.55 : 1,
                 }}
               >
-                <div style={{ fontSize: 9.5, color: isToday ? "#F0C869" : "#8a8272", fontFamily: "'Playfair Display', serif", marginBottom: 4 }}>D{day}</div>
+                <div style={{ fontSize: 9.5, color: isToday ? "#F0C869" : "#8a8272", fontFamily: "'Poppins', sans-serif", marginBottom: 4 }}>D{day}</div>
                 <Coins size={13} color={isToday ? "#F0C869" : "#8a8272"} style={{ margin: "0 auto 3px", display: "block" }} />
                 <div style={{ fontSize: 10.5, color: isToday ? "#F2E6C9" : "#8a8272" }}>{r}</div>
               </div>
@@ -557,7 +550,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
 
         <button
           onClick={onClaim}
-          style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 600, padding: "13px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+          style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 14, fontWeight: 600, padding: "13px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
         >
           <Coins size={16} /> RECLAMAR {reward} MONEDAS
         </button>
@@ -586,7 +579,7 @@ function PaymentModal({ onClose, onSuccess, successText = "Compra añadida a tu 
             <X size={18} />
           </button>
         )}
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
           PASARELA DE PAGO · DEMO
         </div>
         {status === "processing" ? (
@@ -599,11 +592,11 @@ function PaymentModal({ onClose, onSuccess, successText = "Compra añadida a tu 
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "18px auto" }}>
               <Check size={30} color="#241D0C" />
             </div>
-            <p style={{ color: "#F2E6C9", fontSize: 16, fontFamily: "'Playfair Display', serif", marginBottom: 6 }}>¡Compra exitosa!</p>
+            <p style={{ color: "#F2E6C9", fontSize: 16, fontFamily: "'Poppins', sans-serif", marginBottom: 6 }}>¡Compra exitosa!</p>
             <p style={{ color: "#9C927B", fontSize: 13.5, marginBottom: 18, lineHeight: 1.5 }}>{successText}</p>
             <button
               onClick={onSuccess}
-              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
+              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
             >
               CONTINUAR
             </button>
@@ -663,7 +656,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,10,6,.82)", zIndex: 90, overflowY: "auto", padding: "40px 18px" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#F2E6C9", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 22, color: "#F2E6C9", display: "flex", alignItems: "center", gap: 10 }}>
             <ShoppingBag size={20} /> Tienda
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#9C927B", cursor: "pointer" }}>
@@ -672,11 +665,11 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(240,200,105,.08)", border: "1px solid rgba(240,200,105,.25)", borderRadius: 12, padding: "14px 16px", marginBottom: 18, gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Playfair Display', serif" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Poppins', sans-serif" }}>
             <Coins size={18} /> {coins} monedas
           </div>
           {isPremium && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 12 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Poppins', sans-serif", fontSize: 12 }}>
               <Check size={14} /> Premium activo · sin anuncios
             </div>
           )}
@@ -694,7 +687,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#C7BBA0" }}>
               <Crown size={14} color="#F0C869" /> Sin anuncios y revive al instante con Premium
             </span>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, color: "#F0C869", whiteSpace: "nowrap" }}>Ver &rsaquo;</span>
+            <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 11, color: "#F0C869", whiteSpace: "nowrap" }}>Ver &rsaquo;</span>
           </button>
         )}
 
@@ -711,7 +704,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                   padding: "10px 8px", borderRadius: 9, border: "none", cursor: "pointer",
                   background: activeTab ? "rgba(240,200,105,.16)" : "transparent",
                   color: activeTab ? "#F0C869" : "#9C927B",
-                  fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em",
+                  fontFamily: "'Poppins', sans-serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em",
                 }}
               >
                 <TabIcon size={14} /> {t.label}
@@ -722,7 +715,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "sellos" && (
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               SELLOS DE CERA (con monedas ganadas jugando)
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -751,7 +744,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, ${t.colors[0]}, ${t.colors[1]} 75%)` }} />
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, ${t.colors[2]}, ${t.colors[3]} 75%)` }} />
                     </div>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13.5, color: "#F2E6C9", marginBottom: 4 }}>{t.name}</div>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13.5, color: "#F2E6C9", marginBottom: 4 }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: active ? "#F0C869" : affordable ? "#9C927B" : "#C97A5E" }}>
                       {active ? "En uso" : t.cost === 0 ? "Incluido" : affordable ? `${t.cost} monedas` : `Faltan ${t.cost - coins} monedas`}
                     </div>
@@ -767,7 +760,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                 </div>
                 <button
                   onClick={() => goBuyCoins(shortfall.cost, shortfall)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 11.5, fontWeight: 600, padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 11.5, fontWeight: 600, padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   <Coins size={13} /> Comprar monedas
                 </button>
@@ -778,7 +771,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "monedas" && (
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               PAQUETES DE MONEDAS (dinero real)
             </div>
             {suggestedPkgId && (
@@ -802,19 +795,19 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                     }}
                   >
                     {suggested ? (
-                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Playfair Display', serif", color: "#241D0C", background: "#F0C869", borderRadius: 999, padding: "2px 7px" }}>
+                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Poppins', sans-serif", color: "#241D0C", background: "#F0C869", borderRadius: 999, padding: "2px 7px" }}>
                         Te alcanza
                       </div>
                     ) : p.bonus > 0 && (
-                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Playfair Display', serif", color: "#F0C869", background: "rgba(240,200,105,.14)", border: "1px solid rgba(240,200,105,.35)", borderRadius: 999, padding: "2px 7px" }}>
+                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Poppins', sans-serif", color: "#F0C869", background: "rgba(240,200,105,.14)", border: "1px solid rgba(240,200,105,.35)", borderRadius: 999, padding: "2px 7px" }}>
                         +{p.bonus} extra
                       </div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                       <Coins size={20} color="#F0C869" />
-                      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: "#F2E6C9" }}>{total}</span>
+                      <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: 16, color: "#F2E6C9" }}>{total}</span>
                     </div>
-                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#F2E6C9", marginBottom: 4 }}>{p.label}</div>
+                    <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13, color: "#F2E6C9", marginBottom: 4 }}>{p.label}</div>
                     <div style={{ fontSize: 12.5, color: "#9C927B" }}>{p.price}</div>
                   </button>
                 );
@@ -825,11 +818,11 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "premium" && (
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               PAQUETE PREMIUM (dinero real)
             </div>
             <div style={{ padding: 16, borderRadius: 12, border: `1.5px ${isPremium ? "solid" : "dashed"} ${isPremium ? "#F0C869" : "rgba(237,227,205,.25)"}`, background: isPremium ? "rgba(240,200,105,.08)" : "transparent" }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
                 Sin anuncios + 500 monedas
                 {isPremium && <Check size={15} color="#F0C869" />}
               </div>
@@ -841,7 +834,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
               {!isPremium && (
                 <button
                   onClick={onOpenPurchase}
-                  style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+                  style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
                 >
                   $2.99 — Comprar (simulado)
                 </button>
@@ -852,17 +845,17 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "anuncios" && (
           <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               ANUNCIOS RECOMPENSADOS
             </div>
             <div style={{ padding: 16, borderRadius: 12, border: "1.5px solid rgba(237,227,205,.18)", background: "rgba(237,227,205,.05)" }}>
               {isPremium ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13.5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Poppins', sans-serif", fontSize: 13.5 }}>
                   <Check size={16} /> Con Premium activo no verás anuncios.
                 </div>
               ) : (
                 <>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6 }}>
+                  <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6 }}>
                     Ve un anuncio y gana monedas
                   </div>
                   <div style={{ fontSize: 12.5, color: "#9C927B", lineHeight: 1.5, marginBottom: 12 }}>
@@ -870,7 +863,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                   </div>
                   <button
                     onClick={onOpenAd}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
                   >
                     <Gift size={14} /> Ver anuncio: +30 monedas
                   </button>
@@ -888,78 +881,198 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 /* TOP BAR — cabecera consistente de marca                             */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* UI KIT DORADO — insignias, píldoras y título grabado reutilizables  */
+/* ------------------------------------------------------------------ */
+
+const GOLD_TEXT_STYLE = {
+  backgroundImage: "linear-gradient(180deg, #FCEFC0 0%, #F0C869 32%, #C9972F 70%, #8A6318 100%)",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+  color: "#F0C869",
+  filter: "drop-shadow(0 2px 0 rgba(40,26,6,.55)) drop-shadow(0 6px 18px rgba(0,0,0,.5))",
+};
+
+function GoldTitle({ children, size = "clamp(30px, 6vw, 48px)", style = {} }) {
+  return (
+    <div
+      style={{
+        fontFamily: "'Baloo 2', sans-serif",
+        fontWeight: 900,
+        fontSize: size,
+        letterSpacing: "0.02em",
+        lineHeight: 1.1,
+        textTransform: "uppercase",
+        ...GOLD_TEXT_STYLE,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StatPill({ icon, value, label, tone = "default", onClick, small = false }) {
+  const tones = {
+    default: { bg: "linear-gradient(180deg, rgba(50,38,20,.92), rgba(20,14,7,.92))", border: "rgba(240,200,105,.45)", color: "#F2E6C9" },
+    gold: { bg: "linear-gradient(180deg, rgba(74,54,14,.9), rgba(30,20,5,.92))", border: "rgba(240,200,105,.6)", color: "#F6D488" },
+    heart: { bg: "linear-gradient(180deg, rgba(70,20,16,.9), rgba(30,8,6,.92))", border: "rgba(224,90,74,.55)", color: "#F2E6C9" },
+    cool: { bg: "linear-gradient(180deg, rgba(20,40,46,.9), rgba(8,16,18,.92))", border: "rgba(120,190,200,.5)", color: "#DCEFF0" },
+  };
+  const t = tones[tone] || tones.default;
+  const Comp = onClick ? "button" : "div";
+  return (
+    <Comp
+      onClick={onClick}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: small ? 5 : 7,
+        background: t.bg,
+        border: `1.5px solid ${t.border}`,
+        borderRadius: 999,
+        padding: small ? "5px 10px" : "7px 13px",
+        fontFamily: "'Baloo 2', sans-serif",
+        fontWeight: 700,
+        fontSize: small ? 12 : 13.5,
+        color: t.color,
+        boxShadow: "inset 0 1px 1px rgba(255,255,255,.12), inset 0 -6px 10px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.4)",
+        cursor: onClick ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {icon}
+      <span>{value}</span>
+      {label && <span style={{ fontSize: small ? 9 : 10, fontWeight: 600, color: "#9C927B", letterSpacing: "0.04em", marginLeft: 1 }}>{label}</span>}
+    </Comp>
+  );
+}
+
+function LetterBadge({ letter, state = "default" }) {
+  const states = {
+    default: { bg: "linear-gradient(180deg,#4a3a1e,#241a0c)", border: "rgba(240,200,105,.55)", color: "#F0C869" },
+    correct: { bg: "linear-gradient(180deg,#7fc46e,#3f7a3a)", border: "#a7e39a", color: "#0d2008" },
+    wrong: { bg: "linear-gradient(180deg,#d9695a,#8a2f22)", border: "#f0a696", color: "#340a05" },
+  };
+  const s = states[state];
+  return (
+    <div
+      style={{
+        width: 34, height: 34, minWidth: 34, borderRadius: "50%",
+        background: s.bg, border: `1.5px solid ${s.border}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 14, color: s.color,
+        boxShadow: "inset 0 1px 2px rgba(255,255,255,.2), inset 0 -4px 8px rgba(0,0,0,.35), 0 3px 8px rgba(0,0,0,.45)",
+        transition: "background .2s ease, border-color .2s ease",
+      }}
+    >
+      {letter}
+    </div>
+  );
+}
+
+/** Botón tipo gema/vidrio (JUGAR, NIVELES, etc.) con degradado glossy + reflejo superior */
+function GlossyButton({ children, icon, tone = "gold", onClick, disabled = false, big = false }) {
+  const tones = {
+    gold: { top: "#F3D686", bottom: "#B4881F", edge: "#7a5a14", text: "#2B2007" },
+    green: { top: "#7FDB6E", bottom: "#2E8A34", edge: "#1c5a20", text: "#0c2408" },
+    blue: { top: "#6FB6F0", bottom: "#2464A8", edge: "#173f6c", text: "#eaf6ff" },
+    purple: { top: "#C79BEF", bottom: "#7A3FAE", edge: "#4c266e", text: "#fbf3ff" },
+  };
+  const t = tones[tone] || tones.gold;
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        position: "relative",
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+        width: "100%",
+        background: `linear-gradient(180deg, ${t.top} 0%, ${t.bottom} 100%)`,
+        color: t.text,
+        fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, letterSpacing: "0.06em",
+        fontSize: big ? 18 : 14.5,
+        padding: big ? "16px 28px" : "13px 20px",
+        borderRadius: 999,
+        border: `2px solid ${t.edge}`,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        boxShadow: `0 6px 0 ${t.edge}, 0 10px 20px rgba(0,0,0,.45), inset 0 2px 3px rgba(255,255,255,.5), inset 0 -10px 14px rgba(0,0,0,.18)`,
+        textTransform: "uppercase",
+        overflow: "hidden",
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute", top: 3, left: "6%", right: "6%", height: "38%",
+          background: "linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,0))",
+          borderRadius: 999, pointerEvents: "none",
+        }}
+      />
+      <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 10 }}>
+        {icon}
+        {children}
+      </span>
+    </button>
+  );
+}
+
+function IconOrb({ children, onClick, active, badge, label }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: 34, height: 34, borderRadius: "50%",
+        background: active ? "linear-gradient(180deg, rgba(74,54,14,.9), rgba(30,20,5,.92))" : "linear-gradient(180deg, rgba(50,38,20,.85), rgba(20,14,7,.88))",
+        border: `1.5px solid ${active ? "rgba(240,200,105,.6)" : "rgba(240,200,105,.28)"}`,
+        cursor: "pointer", color: active ? "#F6D488" : "#9C927B",
+        boxShadow: "inset 0 1px 1px rgba(255,255,255,.1), 0 3px 8px rgba(0,0,0,.4)",
+        flexShrink: 0,
+      }}
+    >
+      {children}
+      {badge && (
+        <span style={{ position: "absolute", top: -2, right: -2, width: 9, height: 9, borderRadius: "50%", background: "#E0453C", boxShadow: "0 0 0 2px #1a1108" }} />
+      )}
+    </button>
+  );
+}
+
 function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOpenPremium, soundMuted, onToggleMute, musicOn, onToggleMusic }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 640, margin: "0 auto", padding: "0 4px 8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Scroll size={14} color="#2c2211" />
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, maxWidth: 640, margin: "0 auto", padding: "0 6px 10px", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <div style={{ width: 34, height: 34, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #F3D686, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid rgba(240,200,105,.7)", boxShadow: "0 3px 8px rgba(0,0,0,.4), inset 0 1px 2px rgba(255,255,255,.5)" }}>
+          <Scroll size={16} color="#2c2211" />
         </div>
-        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#C7BBA0" }}>DESAFÍO BÍBLICO</span>
+        <span style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: "0.09em", color: "#D9C79A" }}>DESAFÍO BÍBLICO</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {onToggleMusic && (
-          <button
-            onClick={onToggleMusic}
-            aria-label={musicOn ? "Silenciar música" : "Activar música"}
-            style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 30, height: 30, borderRadius: "50%",
-              background: musicOn ? "rgba(240,200,105,.1)" : "rgba(237,227,205,.06)",
-              border: `1px solid ${musicOn ? "rgba(240,200,105,.35)" : "rgba(237,227,205,.15)"}`,
-              cursor: "pointer", color: musicOn ? "#F0C869" : "#8a8272",
-            }}
-          >
+          <IconOrb onClick={onToggleMusic} active={musicOn} label={musicOn ? "Silenciar música" : "Activar música"}>
             <Music size={14} />
-          </button>
+          </IconOrb>
         )}
         {onToggleMute && (
-          <button
-            onClick={onToggleMute}
-            aria-label={soundMuted ? "Activar sonido" : "Silenciar sonido"}
-            style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 30, height: 30, borderRadius: "50%",
-              background: "rgba(237,227,205,.06)", border: "1px solid rgba(237,227,205,.15)",
-              cursor: "pointer", color: "#9C927B",
-            }}
-          >
+          <IconOrb onClick={onToggleMute} active={!soundMuted} label={soundMuted ? "Activar sonido" : "Silenciar sonido"}>
             {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-          </button>
+          </IconOrb>
         )}
         {!isPremium && onOpenPremium && (
-          <button
-            onClick={onOpenPremium}
-            aria-label="Hazte Premium"
-            style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 30, height: 30, borderRadius: "50%",
-              background: "rgba(240,200,105,.1)", border: "1px solid rgba(240,200,105,.35)",
-              cursor: "pointer", color: "#F0C869",
-            }}
-          >
+          <IconOrb onClick={onOpenPremium} active label="Hazte Premium">
             <Crown size={14} />
-          </button>
+          </IconOrb>
         )}
         {onOpenDaily && (
-          <button
-            onClick={onOpenDaily}
-            aria-label="Bendición diaria"
-            style={{
-              position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 30, height: 30, borderRadius: "50%",
-              background: canClaimDaily ? "rgba(240,200,105,.18)" : "rgba(237,227,205,.06)",
-              border: `1px solid ${canClaimDaily ? "rgba(240,200,105,.5)" : "rgba(237,227,205,.15)"}`,
-              cursor: "pointer", color: canClaimDaily ? "#F0C869" : "#8a8272",
-            }}
-          >
+          <IconOrb onClick={onOpenDaily} active={canClaimDaily} badge={canClaimDaily} label="Bendición diaria">
             <Gift size={14} />
-            {canClaimDaily && (
-              <span style={{ position: "absolute", top: -2, right: -2, width: 8, height: 8, borderRadius: "50%", background: "#B0503C", boxShadow: "0 0 0 2px #1e150d" }} />
-            )}
-          </button>
+          </IconOrb>
         )}
-        <CoinPill coins={coins} onClick={onOpenShop} />
+        <StatPill icon={<Coins size={14} />} value={coins} tone="gold" onClick={onOpenShop} />
       </div>
     </div>
   );
@@ -1168,7 +1281,7 @@ function Landscape({ id = "general" }) {
 
 function Backdrop({ children, landscapeId = "general" }) {
   return (
-    <div style={{ minHeight: "100%", width: "100%", background: "#15100b", position: "relative", overflow: "hidden", fontFamily: "'Inter', sans-serif", color: "#EDE3CD" }}>
+    <div style={{ minHeight: "100%", width: "100%", background: "#15100b", position: "relative", overflow: "hidden", fontFamily: "'Poppins', sans-serif", color: "#EDE3CD" }}>
       <Landscape id={landscapeId} />
       <div
         style={{
@@ -1204,25 +1317,56 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
         <div style={{ paddingTop: 20 }}>
           <TopBar coins={coins} onOpenShop={onOpenShop} isPremium={isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} musicOn={musicOn} onToggleMusic={onToggleMusic} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px 60px", textAlign: "center", minHeight: "calc(100vh - 56px)" }}>
-          <div style={{ width: 78, height: 78, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, boxShadow: "0 8px 28px rgba(201,162,39,.4), inset 0 2px 4px rgba(255,255,255,.4)" }}>
-            <Scroll size={36} color="#2c2211" />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "28px 20px 60px", textAlign: "center", minHeight: "calc(100vh - 56px)" }}>
+          <div
+            style={{
+              width: 82, height: 82, borderRadius: "50%",
+              background: "radial-gradient(circle at 35% 30%, #F3D686, #A9791F 75%)",
+              display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22,
+              border: "2.5px solid rgba(255,235,180,.7)",
+              boxShadow: "0 10px 30px rgba(201,162,39,.4), inset 0 2px 5px rgba(255,255,255,.5), inset 0 -6px 10px rgba(80,50,0,.35)",
+            }}
+          >
+            <Scroll size={38} color="#2c2211" />
           </div>
-          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(30px, 6vw, 48px)", letterSpacing: "0.03em", color: "#F2E6C9", textShadow: "0 2px 16px rgba(201,162,39,.3)", lineHeight: 1.15 }}>
-            DESAFÍO<br />BÍBLICO
+
+          <GoldTitle>DESAFÍO<br />BÍBLICO</GoldTitle>
+
+          <div
+            style={{
+              marginTop: 18, maxWidth: 460, padding: "12px 22px",
+              background: "linear-gradient(180deg, rgba(50,38,20,.7), rgba(20,14,7,.7))",
+              border: "1px solid rgba(240,200,105,.35)", borderRadius: 999,
+              fontFamily: "'Baloo 2', sans-serif", fontSize: 12.5, letterSpacing: "0.05em", color: "#E8D9B0", lineHeight: 1.5,
+            }}
+          >
+            PON A PRUEBA TU CONOCIMIENTO Y CRECE EN LA PALABRA DE DIOS
           </div>
-          <p style={{ marginTop: 16, maxWidth: 440, fontSize: 18, color: "#C7BBA0", lineHeight: 1.55 }}>
+
+          <p style={{ marginTop: 18, maxWidth: 440, fontSize: 15.5, color: "#C7BBA0", lineHeight: 1.6 }}>
             Ocho grandes tramos de la historia sagrada, de la Creación a Apocalipsis
             &mdash; {totalQuestions} preguntas en total. Avanza de nivel, gana monedas
             y estampa tu sello en cada respuesta.
           </p>
-          <button
-            onClick={() => { playClick(); onStart(); }}
-            style={{ marginTop: 34, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 16, letterSpacing: "0.06em", fontWeight: 600, padding: "14px 32px", borderRadius: 999, border: "none", cursor: "pointer", boxShadow: "0 10px 26px rgba(201,162,39,.35)" }}
-          >
-            <Play size={18} fill="#241D0C" /> COMENZAR
-          </button>
-          <p style={{ marginTop: 22, fontSize: 12, color: "#6b6350", letterSpacing: "0.03em" }}>Gratis · sin registro · progreso guardado en este dispositivo</p>
+
+          <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 12, marginTop: 30 }}>
+            <GlossyButton tone="green" icon={<Play size={19} fill="#0c2408" />} onClick={() => { playClick(); onStart(); }} big>
+              Jugar
+            </GlossyButton>
+            <GlossyButton tone="blue" icon={<ShoppingBag size={17} />} onClick={() => { playClick(); onOpenShop(); }}>
+              Tienda
+            </GlossyButton>
+            <GlossyButton tone="gold" icon={<Gift size={17} />} onClick={() => { playClick(); onOpenDaily(); }}>
+              Regalo diario {canClaimDaily ? "●" : ""}
+            </GlossyButton>
+            {!isPremium && (
+              <GlossyButton tone="purple" icon={<Crown size={17} />} onClick={() => { playClick(); onOpenPremium(); }}>
+                Hazte Premium
+              </GlossyButton>
+            )}
+          </div>
+
+          <p style={{ marginTop: 24, fontSize: 12, color: "#6b6350", letterSpacing: "0.03em" }}>Gratis · sin registro · progreso guardado en este dispositivo</p>
         </div>
       </div>
     </div>
@@ -1236,10 +1380,10 @@ function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, 
       <TopBar coins={progress.coins} onOpenShop={onOpenShop} isPremium={progress.isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} musicOn={musicOn} onToggleMusic={onToggleMusic} />
 
       <div style={{ maxWidth: 640, margin: "6px auto 26px" }}>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 4.5vw, 30px)", color: "#F2E6C9" }}>Mapa de niveles</div>
-        <p style={{ color: "#9C927B", marginTop: 6, fontSize: 14 }}>{clearedCount} de {CATEGORIES.length} eras completadas · {CATEGORIES[0].questions.length} preguntas por nivel</p>
-        <div style={{ height: 5, width: "100%", background: "rgba(237,227,205,.1)", borderRadius: 4, overflow: "hidden", marginTop: 12 }}>
-          <div style={{ height: "100%", width: `${(clearedCount / CATEGORIES.length) * 100}%`, background: "linear-gradient(90deg, #E8C26D, #B4881F)", transition: "width .5s ease" }} />
+        <GoldTitle size="clamp(22px, 4.5vw, 30px)" style={{ textAlign: "left" }}>Mapa de niveles</GoldTitle>
+        <p style={{ color: "#9C927B", marginTop: 8, fontSize: 14 }}>{clearedCount} de {CATEGORIES.length} eras completadas · {CATEGORIES[0].questions.length} preguntas por nivel</p>
+        <div style={{ height: 8, width: "100%", background: "rgba(0,0,0,.4)", border: "1px solid rgba(240,200,105,.25)", borderRadius: 999, overflow: "hidden", marginTop: 12, boxShadow: "inset 0 2px 4px rgba(0,0,0,.5)" }}>
+          <div style={{ height: "100%", width: `${(clearedCount / CATEGORIES.length) * 100}%`, background: "linear-gradient(90deg, #F3D686, #B4881F)", transition: "width .5s ease", boxShadow: "0 0 8px rgba(240,200,105,.6)" }} />
         </div>
       </div>
 
@@ -1255,40 +1399,166 @@ function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, 
               onClick={() => { if (unlocked) { playClick(); onPick(cat, i); } }}
               style={{
                 textAlign: "left", position: "relative", overflow: "hidden",
-                borderRadius: 14, padding: "22px 20px", cursor: unlocked ? "pointer" : "not-allowed",
-                border: `1px solid ${unlocked ? cat.accent + "55" : "rgba(237,227,205,.12)"}`,
-                background: cleared ? `${cat.accent}14` : "rgba(237,227,205,.04)",
+                borderRadius: 16, padding: "22px 20px", cursor: unlocked ? "pointer" : "not-allowed",
+                border: `1.5px solid ${unlocked ? "rgba(240,200,105,.5)" : "rgba(237,227,205,.12)"}`,
+                background: cleared
+                  ? `linear-gradient(160deg, ${cat.accent}22, rgba(20,14,7,.92))`
+                  : "linear-gradient(160deg, rgba(50,38,20,.85), rgba(16,11,6,.92))",
+                boxShadow: unlocked ? "inset 0 1px 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.4)" : "none",
                 filter: unlocked ? "none" : "grayscale(0.7)",
                 opacity: unlocked ? 1 : 0.55,
                 transition: "transform .18s ease, box-shadow .18s ease",
               }}
-              onMouseEnter={(e) => { if (unlocked) { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 14px 30px ${cat.accent}22`; } }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              onMouseEnter={(e) => { if (unlocked) { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = `0 14px 30px ${cat.accent}33`; } }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "inset 0 1px 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.4)"; }}
             >
               <SceneArt id={cat.scene} accent={cat.accent} opacity={unlocked ? 0.24 : 0.08} />
               <div style={{ position: "relative", zIndex: 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 10, background: `${cat.accent}22`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {unlocked ? <Icon size={22} color={cat.accent} /> : <Lock size={20} color="#8a8272" />}
+                  <div style={{ width: 42, height: 42, borderRadius: "50%", background: `linear-gradient(180deg, ${cat.accent}55, rgba(0,0,0,.4))`, border: `1.5px solid ${cat.accent}88`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {unlocked ? <Icon size={20} color="#F2E6C9" /> : <Lock size={18} color="#8a8272" />}
                   </div>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, color: "#9C927B" }}>NIVEL {i + 1}</div>
+                  <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 11, color: "#F0C869", background: "rgba(0,0,0,.4)", border: "1px solid rgba(240,200,105,.3)", borderRadius: 999, padding: "3px 9px" }}>NIVEL {i + 1}</div>
                 </div>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 6 }}>{cat.name}</div>
-                <div style={{ fontSize: 13.5, color: "#9C927B", lineHeight: 1.4, marginBottom: 10 }}>{cat.subtitle}</div>
+                <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 16, color: "#F2E6C9", marginBottom: 6 }}>{cat.name}</div>
+                <div style={{ fontSize: 13.5, color: "#9C927B", lineHeight: 1.4, marginBottom: 12 }}>{cat.subtitle}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   {cleared ? (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#5B7B5A", fontFamily: "'Playfair Display', serif" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#7fc46e", fontFamily: "'Baloo 2', sans-serif", fontWeight: 700 }}>
                       <Check size={13} /> COMPLETADO
                     </div>
                   ) : (
                     <span style={{ fontSize: 11.5, color: "#8a8272" }}>{cat.questions.length} preguntas</span>
                   )}
-                  {unlocked && <ChevronRight size={16} color={cat.accent} />}
+                  {unlocked && <ChevronRight size={16} color="#F0C869" />}
                 </div>
               </div>
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/** Botón individual de power-up: ícono, etiqueta y costo en monedas, estilo losa de piedra/oro. */
+function PowerUpButton({ icon, label, cost, disabled, used, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={!disabled ? "db-powerup-btn" : undefined}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+        background: used
+          ? "linear-gradient(180deg, rgba(90,120,70,.35), rgba(30,45,20,.5))"
+          : "linear-gradient(180deg, rgba(50,38,20,.92), rgba(18,13,6,.94))",
+        border: `1.5px solid ${used ? "rgba(140,220,120,.55)" : "rgba(240,200,105,.4)"}`,
+        borderRadius: 14, padding: "9px 6px 8px",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled && !used ? 0.4 : 1,
+        boxShadow: "inset 0 1px 1px rgba(255,255,255,.08), 0 4px 10px rgba(0,0,0,.4)",
+        minWidth: 0,
+      }}
+    >
+      <span style={{ color: used ? "#a7e39a" : "#F0C869" }}>{icon}</span>
+      <span style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 9.5, letterSpacing: "0.02em", color: used ? "#c9f0bd" : "#EDE3CD", textAlign: "center", textTransform: "uppercase", lineHeight: 1.15 }}>
+        {label}
+      </span>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontFamily: "'Poppins', sans-serif", fontWeight: 600, fontSize: 9.5, color: "#9C927B" }}>
+        {used ? "Activo" : (
+          <>
+            <Coins size={10} color="#F0C869" /> {cost}
+          </>
+        )}
+      </span>
+    </button>
+  );
+}
+
+/** Barra de power-ups: Pista, Proteger vida, Tiempo extra, Saltar pregunta. */
+function PowerUpBar({ coins, hintUsed, shieldActive, timeUsed, onHint, onShield, onTime, onSkip, locked }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, width: "100%", maxWidth: 560, marginTop: 14 }}>
+      <PowerUpButton
+        icon={<Lightbulb size={18} />}
+        label="Pista"
+        cost={POWERUP_HINT_COST}
+        used={hintUsed}
+        disabled={locked || hintUsed || coins < POWERUP_HINT_COST}
+        onClick={onHint}
+      />
+      <PowerUpButton
+        icon={<Shield size={18} />}
+        label="Proteger vida"
+        cost={POWERUP_SHIELD_COST}
+        used={shieldActive}
+        disabled={locked || shieldActive || coins < POWERUP_SHIELD_COST}
+        onClick={onShield}
+      />
+      <PowerUpButton
+        icon={<Clock size={18} />}
+        label="Tiempo extra"
+        cost={POWERUP_TIME_COST}
+        used={timeUsed}
+        disabled={locked || timeUsed || coins < POWERUP_TIME_COST}
+        onClick={onTime}
+      />
+      <PowerUpButton
+        icon={<FastForward size={18} />}
+        label="Saltar"
+        cost={POWERUP_SKIP_COST}
+        used={false}
+        disabled={locked || coins < POWERUP_SKIP_COST}
+        onClick={onSkip}
+      />
+    </div>
+  );
+}
+
+/** Panel de retroalimentación estilo "personaje + pergamino" al acertar o fallar. */
+function FeedbackPanel({ status, correctText, livesLeft, livesStart, shieldConsumed }) {
+  if (!status) return null;
+  const isCorrect = status === "correct";
+  return (
+    <div
+      className={isCorrect ? "db-feedback-banner db-feedback-correct" : "db-feedback-banner db-feedback-wrong"}
+      style={{
+        marginTop: 16, display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12,
+        background: isCorrect
+          ? "linear-gradient(160deg, rgba(70,140,60,.4), rgba(20,45,16,.55))"
+          : "linear-gradient(160deg, rgba(160,60,45,.4), rgba(60,18,12,.55))",
+        border: `1.5px solid ${isCorrect ? "rgba(140,220,120,.5)" : "rgba(224,120,100,.5)"}`,
+        boxShadow: "0 8px 20px rgba(0,0,0,.4)",
+      }}
+    >
+      <div
+        style={{
+          width: 42, height: 42, minWidth: 42, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 22, background: isCorrect ? "radial-gradient(circle at 35% 30%, #dff3d0, #6fae5a 75%)" : "radial-gradient(circle at 35% 30%, #f0d0c8, #a5473a 75%)",
+          border: `2px solid ${isCorrect ? "#a7e39a" : "#f0a696"}`, boxShadow: "0 3px 8px rgba(0,0,0,.4)",
+        }}
+      >
+        {isCorrect ? "🙌" : shieldConsumed ? "🛡️" : "😟"}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: "0.03em", color: isCorrect ? "#c9f0bd" : "#f6c4ba", marginBottom: 3 }}>
+          {isCorrect ? <Check size={16} color="#a7e39a" /> : <X size={16} color="#f0a696" />}
+          {isCorrect ? "¡CORRECTO!" : "¡INCORRECTO!"}
+        </div>
+        <div style={{ fontFamily: "'Poppins', sans-serif", fontSize: 12.5, color: isCorrect ? "#dff0d4" : "#f6dcd6", lineHeight: 1.35 }}>
+          {isCorrect ? "¡Bien hecho! Sigue así en el desafío." : `La respuesta correcta era: "${correctText}"`}
+        </div>
+        {!isCorrect && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, fontFamily: "'Poppins', sans-serif", fontSize: 11.5, color: shieldConsumed ? "#a7e39a" : "#f0a696" }}>
+            {shieldConsumed ? "Tu escudo te protegió, no perdiste vida" : "Has perdido una vida"}
+            {!shieldConsumed && (
+              <span style={{ display: "inline-flex", gap: 2 }}>
+                {Array.from({ length: livesStart }).map((_, i) => <LampLife key={i} lit={i < livesLeft} small />)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1307,10 +1577,26 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
   const [reviveOffer, setReviveOffer] = useState(false);
   const [reviveUsed, setReviveUsed] = useState(false);
   const [showAd, setShowAd] = useState(false);
+
+  /* Power-ups: Pista y Tiempo extra se reinician cada pregunta; el Escudo
+     (Proteger vida) se mantiene activo hasta que absorbe una respuesta incorrecta. */
+  const [hintUsed, setHintUsed] = useState(false);
+  const [timeUsed, setTimeUsed] = useState(false);
+  const [removedOptions, setRemovedOptions] = useState([]);
+  const [shieldActive, setShieldActive] = useState(false);
+  const [shieldConsumed, setShieldConsumed] = useState(false);
+
   const lockedRef = useRef(false);
   const pendingFinishRef = useRef(null);
 
   const current = order[idx];
+
+  function resetPerQuestionPowerState() {
+    setHintUsed(false);
+    setTimeUsed(false);
+    setRemovedOptions([]);
+    setShieldConsumed(false);
+  }
 
   const finishNow = useCallback(
     (finalScore, finalCoins, finalLives) => {
@@ -1333,6 +1619,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
         setSelected(null);
         setStatus(null);
         setTimeLeft(TIME_PER_QUESTION);
+        resetPerQuestionPowerState();
         lockedRef.current = false;
       }
     },
@@ -1349,9 +1636,19 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
       const bonus = isCorrect ? 100 + newStreak * 15 + Math.round(timeLeft * 2) : 0;
       const newScore = score + bonus;
       const newCoins = coinsEarned + (isCorrect ? COINS_PER_CORRECT : 0);
-      const newLives = isCorrect ? lives : lives - 1;
+
+      let newLives = lives;
+      if (!isCorrect) {
+        if (shieldActive) {
+          setShieldActive(false);
+          setShieldConsumed(true);
+        } else {
+          newLives = lives - 1;
+        }
+      }
 
       isCorrect ? playCorrect() : playWrong();
+      if (isCorrect && newStreak >= 2) playStreak();
       setStatus(isCorrect ? "correct" : "wrong");
       setStreak(newStreak);
       setScore(newScore);
@@ -1360,7 +1657,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
 
       setTimeout(() => goNext(newLives, newScore, newCoins), 850);
     },
-    [current, streak, score, coinsEarned, lives, timeLeft, goNext]
+    [current, streak, score, coinsEarned, lives, timeLeft, goNext, shieldActive]
   );
 
   useEffect(() => {
@@ -1369,9 +1666,54 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
       handleAnswer(-1);
       return;
     }
+    if (timeLeft <= 5) playTick();
     const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [timeLeft, status, reviveOffer, showAd, handleAnswer]);
+
+  function handleHint() {
+    if (status || hintUsed || lockedRef.current) return;
+    if (coins < POWERUP_HINT_COST) { playDenied(); onNeedCoins(POWERUP_HINT_COST); return; }
+    onSpendCoins(POWERUP_HINT_COST);
+    playHint();
+    const wrongIdx = shuffle(current.options.map((_, i) => i).filter((i) => i !== current.correct));
+    setRemovedOptions(wrongIdx.slice(0, 2));
+    setHintUsed(true);
+  }
+
+  function handleShieldPowerUp() {
+    if (shieldActive || lockedRef.current) return;
+    if (coins < POWERUP_SHIELD_COST) { playDenied(); onNeedCoins(POWERUP_SHIELD_COST); return; }
+    onSpendCoins(POWERUP_SHIELD_COST);
+    playShield();
+    setShieldActive(true);
+  }
+
+  function handleTimeBonusPowerUp() {
+    if (status || timeUsed || lockedRef.current) return;
+    if (coins < POWERUP_TIME_COST) { playDenied(); onNeedCoins(POWERUP_TIME_COST); return; }
+    onSpendCoins(POWERUP_TIME_COST);
+    playTimeBonus();
+    setTimeLeft((t) => t + POWERUP_TIME_BONUS);
+    setTimeUsed(true);
+  }
+
+  function handleSkipPowerUp() {
+    if (status || lockedRef.current) return;
+    if (coins < POWERUP_SKIP_COST) { playDenied(); onNeedCoins(POWERUP_SKIP_COST); return; }
+    onSpendCoins(POWERUP_SKIP_COST);
+    playSkip();
+    if (idx + 1 >= order.length) {
+      finishNow(score, coinsEarned, lives);
+    } else {
+      setIdx((i) => i + 1);
+      setSelected(null);
+      setStatus(null);
+      setTimeLeft(TIME_PER_QUESTION);
+      resetPerQuestionPowerState();
+      lockedRef.current = false;
+    }
+  }
 
   function acceptRevive() {
     if (isPremium) {
@@ -1389,6 +1731,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
     setSelected(null);
     setStatus(null);
     setTimeLeft(TIME_PER_QUESTION);
+    resetPerQuestionPowerState();
     lockedRef.current = false;
     if (idx + 1 < order.length) {
       setIdx((i) => i + 1);
@@ -1417,23 +1760,23 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
 
       {reviveOffer && !showAd && !shopOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,10,6,.8)", zIndex: 95, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ maxWidth: 320, background: "linear-gradient(160deg, #3c2a1a, #1e150d)", border: "1px solid rgba(240,200,105,.3)", borderRadius: 16, padding: 26, textAlign: "center" }}>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 10 }}>Te quedaste sin vidas</div>
+          <div style={{ maxWidth: 320, background: "linear-gradient(160deg, #3c2a1a, #1e150d)", border: "1.5px solid rgba(240,200,105,.45)", borderRadius: 18, padding: 26, textAlign: "center", boxShadow: "0 20px 50px rgba(0,0,0,.5)" }}>
+            <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 17, color: "#F2E6C9", marginBottom: 10 }}>Te quedaste sin vidas</div>
             <p style={{ color: "#9C927B", fontSize: 14, marginBottom: 18, lineHeight: 1.5 }}>
               {isPremium ? "Como usuario premium, revive al instante sin anuncios." : "Elegí cómo continuar el desafío con una vida extra."}
             </p>
             {isPremium ? (
-              <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 10 }}>
+              <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 10 }}>
                 <Sparkles size={15} /> REVIVIR AL INSTANTE
               </button>
             ) : (
               <>
-                <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 8 }}>
+                <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 8 }}>
                   <Gift size={15} /> VER ANUNCIO Y REVIVIR
                 </button>
 
                 {coins >= REVIVE_COST_COINS ? (
-                  <button onClick={reviveWithCoins} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(240,200,105,.12)", color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "1.5px solid rgba(240,200,105,.4)", cursor: "pointer", marginBottom: 10 }}>
+                  <button onClick={reviveWithCoins} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(240,200,105,.12)", color: "#F0C869", fontFamily: "'Poppins', sans-serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "1.5px solid rgba(240,200,105,.4)", cursor: "pointer", marginBottom: 10 }}>
                     <Coins size={15} /> REVIVIR CON {REVIVE_COST_COINS} MONEDAS
                   </button>
                 ) : (
@@ -1441,84 +1784,160 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
                     <span style={{ fontSize: 11.5, color: "#8a8272", textAlign: "left" }}>
                       Revivir con monedas: faltan {REVIVE_COST_COINS - coins}
                     </span>
-                    <button onClick={() => onNeedCoins(REVIVE_COST_COINS)} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(240,200,105,.16)", color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    <button onClick={() => onNeedCoins(REVIVE_COST_COINS)} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(240,200,105,.16)", color: "#F0C869", fontFamily: "'Poppins', sans-serif", fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
                       <Coins size={12} /> Comprar
                     </button>
                   </div>
                 )}
               </>
             )}
-            <button onClick={declineRevive} style={{ width: "100%", background: "none", color: "#9C927B", fontFamily: "'Playfair Display', serif", fontSize: 12.5, padding: "10px 18px", borderRadius: 999, border: "1px solid rgba(237,227,205,.2)", cursor: "pointer" }}>
+            <button onClick={declineRevive} style={{ width: "100%", background: "none", color: "#9C927B", fontFamily: "'Poppins', sans-serif", fontSize: 12.5, padding: "10px 18px", borderRadius: 999, border: "1px solid rgba(237,227,205,.2)", cursor: "pointer" }}>
               Ver resultados
             </button>
           </div>
         </div>
       )}
 
-      <div style={{ width: "100%", maxWidth: 560, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Array.from({ length: LIVES_START }).map((_, i) => (
-            <LampLife key={i} lit={i < lives} />
-          ))}
-        </div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#9C927B", letterSpacing: "0.08em" }}>{category.name.toUpperCase()}</div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: "#F0C869" }}>{score} pts</div>
+      <div style={{ width: "100%", maxWidth: 560, display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        <StatPill
+          tone="heart"
+          icon={<span style={{ display: "inline-flex", gap: 2 }}>{Array.from({ length: LIVES_START }).map((_, i) => <LampLife key={i} lit={i < lives} small />)}</span>}
+          value="VIDAS"
+          small
+        />
+        <StatPill
+          tone={pct > 30 ? "cool" : "heart"}
+          icon={<Clock size={14} />}
+          value={`${timeLeft} SEG`}
+          small
+        />
+        <StatPill tone="default" icon={<Trophy size={14} color="#F0C869" />} value={`${score} PTS`} small />
+        <StatPill tone="gold" icon={<Coins size={14} />} value={coinsEarned} small />
       </div>
 
-      <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         {order.map((_, i) => (
-          <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < idx ? accent : i === idx ? "#F2E6C9" : "rgba(237,227,205,.2)", transition: "background .3s ease" }} />
+          <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < idx ? "#F0C869" : i === idx ? "#F2E6C9" : "rgba(237,227,205,.18)", boxShadow: i <= idx ? "0 0 6px rgba(240,200,105,.6)" : "none", transition: "background .3s ease" }} />
         ))}
       </div>
 
+      <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 12.5, color: "#9C927B", letterSpacing: "0.1em", marginBottom: 4 }}>{category.name.toUpperCase()}</div>
+
       {streak >= 2 && (
-        <div style={{ marginBottom: 12, fontSize: 13, color: "#F0C869", fontFamily: "'Playfair Display', serif", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ marginBottom: 10, fontSize: 12.5, color: "#F0C869", fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 6 }}>
           <Sparkles size={14} /> RACHA x{streak}
         </div>
       )}
 
-      <div style={{ position: "relative", width: "100%", maxWidth: 560, borderRadius: 16, overflow: "hidden", boxShadow: "0 20px 50px rgba(0,0,0,.45)", border: `1px solid ${accent}66` }}>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, #EDE3CD, #E2D4B4)" }} />
-        <SceneArt id={category.scene} accent={accent} opacity={0.16} />
-        <div style={{ position: "relative", padding: "30px 26px 26px" }}>
+      <div
+        style={{
+          position: "relative", width: "100%", maxWidth: 560, borderRadius: 20, overflow: "hidden",
+          boxShadow: "0 24px 60px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06)",
+          border: "2px solid rgba(240,200,105,.4)",
+        }}
+      >
+        <div style={{ position: "absolute", inset: 0, background: `linear-gradient(165deg, rgba(56,40,20,.97), rgba(16,11,6,.98) 60%)` }} />
+        <SceneArt id={category.scene} accent={accent} opacity={0.22} />
+        <div
+          aria-hidden="true"
+          style={{ position: "absolute", inset: 0, border: "1px solid rgba(240,200,105,.18)", borderRadius: 18, margin: 6, pointerEvents: "none" }}
+        />
+        <div style={{ position: "relative", padding: "26px 22px 24px" }}>
           <WaxSeal status={status} theme={theme} />
 
-          <div style={{ height: 4, width: "100%", background: "rgba(60,45,20,.15)", borderRadius: 4, overflow: "hidden", marginBottom: 20 }}>
-            <div style={{ height: "100%", width: `${pct}%`, background: pct > 30 ? accent : "#9B3A2E", transition: "width 1s linear" }} />
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <div style={{ fontSize: 11.5, letterSpacing: "0.14em", color: "#2B2007", fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, background: "linear-gradient(180deg, #F3D686, #C9972F)", border: "1px solid rgba(255,235,180,.7)", borderRadius: 999, padding: "5px 16px" }}>
+              PREGUNTA {idx + 1}/{order.length}
+            </div>
           </div>
 
-          <div style={{ fontSize: 11, letterSpacing: "0.12em", color: "#8a7550", fontFamily: "'Playfair Display', serif", marginBottom: 10 }}>
-            PREGUNTA {idx + 1} DE {order.length}
-          </div>
-
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 600, color: "#2C2211", lineHeight: 1.35, marginBottom: 22, minHeight: 62 }}>
+          <div
+            style={{
+              background: "linear-gradient(160deg, rgba(0,0,0,.35), rgba(0,0,0,.15))",
+              border: "1px solid rgba(240,200,105,.25)",
+              borderRadius: 12, padding: "18px 18px",
+              fontFamily: "'Baloo 2', sans-serif", fontSize: 20, fontWeight: 700, color: "#F5EACB",
+              lineHeight: 1.4, marginBottom: 22, minHeight: 62, textAlign: "center",
+              textShadow: "0 2px 6px rgba(0,0,0,.6)",
+            }}
+          >
             {current.q}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {current.options.map((opt, i) => {
+              const isRemoved = removedOptions.includes(i);
               const isSelected = selected === i;
               const isCorrectOpt = status && i === current.correct;
               const isWrongSelected = status && isSelected && i !== current.correct;
-              let bg = "rgba(60,45,20,.06)";
-              let border = "rgba(60,45,20,.18)";
-              if (isCorrectOpt) { bg = "#5B7B5A22"; border = "#5B7B5A"; }
-              else if (isWrongSelected) { bg = "#9B3A2E22"; border = "#9B3A2E"; }
+              let letterState = "default";
+              let bg = "linear-gradient(180deg, rgba(60,45,22,.55), rgba(30,21,10,.65))";
+              let border = "rgba(240,200,105,.3)";
+              let textColor = "#EDE3CD";
+              if (isCorrectOpt) { letterState = "correct"; bg = "linear-gradient(180deg, rgba(95,175,80,.32), rgba(35,70,30,.4))"; border = "#7fc46e"; textColor = "#eafce3"; }
+              else if (isWrongSelected) { letterState = "wrong"; bg = "linear-gradient(180deg, rgba(200,90,70,.32), rgba(90,30,20,.42))"; border = "#e0857a"; textColor = "#ffece8"; }
               return (
                 <button
                   key={i}
-                  disabled={!!status}
+                  className="db-option-row"
+                  disabled={!!status || isRemoved}
                   onClick={() => handleAnswer(i)}
-                  style={{ textAlign: "left", padding: "14px 14px", borderRadius: 10, background: bg, border: `1.5px solid ${border}`, color: "#2C2211", fontFamily: "'Inter', sans-serif", fontSize: 15.5, fontWeight: 500, cursor: status ? "default" : "pointer", lineHeight: 1.3, transition: "background .2s ease, border-color .2s ease" }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 12,
+                    textAlign: "left", padding: "10px 14px", borderRadius: 999,
+                    background: bg, border: `1.5px solid ${border}`, color: textColor,
+                    fontFamily: "'Poppins', sans-serif", fontSize: 15, fontWeight: 500,
+                    cursor: status || isRemoved ? "default" : "pointer", lineHeight: 1.3,
+                    boxShadow: "inset 0 1px 1px rgba(255,255,255,.06)",
+                    transition: "background .2s ease, border-color .2s ease, opacity .2s ease",
+                    opacity: isRemoved ? 0.25 : 1,
+                    textDecoration: isRemoved ? "line-through" : "none",
+                  }}
                 >
-                  {opt}
+                  <LetterBadge letter={String.fromCharCode(65 + i)} state={letterState} />
+                  <span style={{ flex: 1 }}>{opt}</span>
+                  {isCorrectOpt && <Check size={20} color="#7fc46e" />}
+                  {isWrongSelected && <X size={20} color="#e0857a" />}
                 </button>
               );
             })}
           </div>
 
+          <FeedbackPanel
+            status={status}
+            correctText={current.options[current.correct]}
+            livesLeft={lives}
+            livesStart={LIVES_START}
+            shieldConsumed={shieldConsumed}
+          />
+
+          <PowerUpBar
+            coins={coins}
+            hintUsed={hintUsed}
+            shieldActive={shieldActive}
+            timeUsed={timeUsed}
+            onHint={handleHint}
+            onShield={handleShieldPowerUp}
+            onTime={handleTimeBonusPowerUp}
+            onSkip={handleSkipPowerUp}
+            locked={!!status}
+          />
+
           {status && (
-            <div style={{ marginTop: 18, fontSize: 13, color: "#8a7550", fontStyle: "italic", textAlign: "right" }}>{current.ref}</div>
+            <div
+              style={{
+                marginTop: 14, display: "flex", alignItems: "flex-start", gap: 10,
+                background: "linear-gradient(160deg, #EDE3CD, #DFCFA6)",
+                border: "1px solid rgba(140,110,50,.4)", borderRadius: 10, padding: "12px 14px",
+                boxShadow: "0 6px 16px rgba(0,0,0,.3)",
+              }}
+            >
+              <BookOpen size={16} color="#8a6a3b" style={{ marginTop: 2, flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 10.5, letterSpacing: "0.1em", color: "#8a7550", fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, marginBottom: 3 }}>REFERENCIA BÍBLICA</div>
+                <div style={{ fontSize: 13.5, color: "#3a2c14", fontFamily: "'Poppins', sans-serif", fontStyle: "italic" }}>{current.ref}</div>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -1538,35 +1957,51 @@ function Results({ result, unlockedNext, onRestart, onMenu }) {
   const medal = won ? MEDAL_THRESHOLDS.find((m) => score >= m.min) : null;
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", textAlign: "center" }}>
-      <div style={{ width: 84, height: 84, borderRadius: "50%", background: won ? medal.grad : "radial-gradient(circle at 35% 30%, #b0503c, #6e2c1f 75%)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, boxShadow: "0 8px 24px rgba(0,0,0,.35)" }}>
-        <Trophy size={36} color="#241D0C" />
+      <div
+        style={{
+          width: 96, height: 96, borderRadius: "50%",
+          background: won ? medal.grad : "radial-gradient(circle at 35% 30%, #c0685a, #6e2c1f 75%)",
+          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22,
+          border: "2.5px solid rgba(255,235,180,.65)",
+          boxShadow: "0 12px 30px rgba(0,0,0,.5), inset 0 2px 5px rgba(255,255,255,.4), inset 0 -8px 12px rgba(0,0,0,.3)",
+        }}
+      >
+        <Trophy size={40} color="#241D0C" />
       </div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, letterSpacing: "0.12em", color: "#9C927B" }}>
+      <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: "0.14em", color: "#9C927B" }}>
         {won ? medal.label.toUpperCase() : "EL SELLO SE ROMPIÓ"}
       </div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px, 8vw, 56px)", color: "#F2E6C9", margin: "10px 0 6px" }}>{score}</div>
-      <div style={{ color: "#C7BBA0", fontSize: 16, marginBottom: 10 }}>{answered} de {total} preguntas respondidas</div>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 14, marginBottom: 6 }}>
-        <Coins size={16} /> +{coins} monedas ganadas
+      <GoldTitle size="clamp(38px, 8vw, 56px)" style={{ margin: "10px 0 6px" }}>{score}</GoldTitle>
+      <div style={{ color: "#C7BBA0", fontSize: 16, marginBottom: 14 }}>{answered} de {total} preguntas respondidas</div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 8 }}>
+        <StatPill tone="gold" icon={<Coins size={14} />} value={`+${coins} monedas`} />
+        {won && perfectBonus > 0 && (
+          <StatPill tone="gold" icon={<Sparkles size={13} />} value={`+${perfectBonus} bono perfecto`} />
+        )}
       </div>
-      {won && perfectBonus > 0 && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13, marginBottom: 6 }}>
-          <Sparkles size={13} /> Racha perfecta: +{perfectBonus} monedas bono
-        </div>
-      )}
+
       {won && unlockedNext && (
-        <div style={{ color: "#5B7B5A", fontFamily: "'Playfair Display', serif", fontSize: 13.5, marginTop: 4, marginBottom: 30, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ color: "#7fc46e", fontFamily: "'Baloo 2', sans-serif", fontWeight: 700, fontSize: 13, marginTop: 8, marginBottom: 30, display: "flex", alignItems: "center", gap: 6 }}>
           <Check size={15} /> Siguiente nivel desbloqueado
         </div>
       )}
       {!(won && unlockedNext) && <div style={{ marginBottom: 24 }} />}
 
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={() => { playClick(); onRestart(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "none", cursor: "pointer" }}>
-          <RotateCcw size={16} /> JUGAR DE NUEVO
-        </button>
-        <button onClick={() => { playClick(); onMenu(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: "#EDE3CD", fontFamily: "'Playfair Display', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(237,227,205,.35)", cursor: "pointer" }}>
-          MAPA DE NIVELES
+      <div style={{ width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 12 }}>
+        <GlossyButton tone="green" icon={<RotateCcw size={17} />} onClick={() => { playClick(); onRestart(); }}>
+          Jugar de nuevo
+        </GlossyButton>
+        <button
+          onClick={() => { playClick(); onMenu(); }}
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
+            background: "rgba(237,227,205,.05)", color: "#EDE3CD",
+            fontFamily: "'Baloo 2', sans-serif", fontSize: 13.5, letterSpacing: "0.05em", fontWeight: 700,
+            padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(240,200,105,.4)", cursor: "pointer",
+          }}
+        >
+          Mapa de niveles
         </button>
       </div>
     </div>
@@ -1720,7 +2155,7 @@ export default function DesafioBiblico() {
   if (!loaded) {
     return (
       <Backdrop>
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#9C927B", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.1em" }}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#9C927B", fontFamily: "'Poppins', sans-serif", fontSize: 13, letterSpacing: "0.1em" }}>
           CARGANDO PERGAMINO…
         </div>
       </Backdrop>
@@ -1730,13 +2165,24 @@ export default function DesafioBiblico() {
   return (
     <Backdrop landscapeId={activeLandscapeId}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap');
         @keyframes sealPop { 0% { transform: scale(0.3) rotate(-8deg); opacity: 0; } 55% { transform: scale(1.06) rotate(1deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
         @keyframes spin { to { transform: rotate(360deg); } }
         .seal-stamp { animation: sealPop .24s cubic-bezier(.2,1.4,.4,1) both; }
         @keyframes shopGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(240,200,105,0); } 50% { box-shadow: 0 0 0 6px rgba(240,200,105,.22); } }
         .shop-highlight { animation: shopGlow 1.1s ease-in-out; }
-        @media (prefers-reduced-motion: reduce) { .seal-stamp, .shop-highlight { animation: none; } }
+        @keyframes rowIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        .db-option-row { animation: rowIn .28s ease both; }
+        @keyframes bannerIn { 0% { opacity: 0; transform: translateY(-6px) scale(.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .db-feedback-banner { animation: bannerIn .22s ease both; }
+        @keyframes correctGlow { 0% { box-shadow: 0 8px 20px rgba(0,0,0,.4), 0 0 0 0 rgba(140,220,120,.6); } 60% { box-shadow: 0 8px 20px rgba(0,0,0,.4), 0 0 0 10px rgba(140,220,120,0); } 100% { box-shadow: 0 8px 20px rgba(0,0,0,.4), 0 0 0 0 rgba(140,220,120,0); } }
+        .db-feedback-correct { animation: bannerIn .22s ease both, correctGlow .7s ease-out .1s; }
+        @keyframes shakeWrong { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-5px); } 40%, 60% { transform: translateX(5px); } }
+        .db-feedback-wrong { animation: bannerIn .22s ease both, shakeWrong .5s ease-in-out .05s; }
+        @keyframes powerupPress { 0% { transform: scale(1); } 45% { transform: scale(.92); } 100% { transform: scale(1); } }
+        .db-powerup-btn:active { animation: powerupPress .18s ease; }
+        .db-powerup-btn:not(:disabled):hover { border-color: rgba(240,200,105,.75) !important; }
+        @media (prefers-reduced-motion: reduce) { .seal-stamp, .shop-highlight, .db-option-row, .db-feedback-banner, .db-feedback-correct, .db-feedback-wrong, .db-powerup-btn:active { animation: none; } }
         button:focus-visible { outline: 2px solid #F0C869; outline-offset: 2px; }
       `}</style>
 
