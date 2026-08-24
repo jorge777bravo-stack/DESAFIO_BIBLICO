@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Flame, Scroll, Crown, Trophy, ChevronRight, RotateCcw, Play, Sparkles,
   Sailboat, Tent, Star, Users, BookOpen, Lock, Coins, Gem, X, Gift, ShoppingBag, Check,
-  Volume2, VolumeX
+  Volume2, VolumeX, Music
 } from "lucide-react";
 import {
   loadMutePref, isMuted, toggleMuted,
-  playClick, playCorrect, playWrong, playLevelComplete, playGameOver, playCoin
+  playClick, playCorrect, playWrong, playLevelComplete, playGameOver, playCoin,
+  loadMusicPref, isMusicEnabled, toggleMusicEnabled, startMusic, stopMusic
 } from "./sound";
 
 /* ------------------------------------------------------------------ */
@@ -435,7 +436,7 @@ function WaxSeal({ status, theme }) {
           border: "3px solid rgba(240,200,105,.55)",
         }}
       >
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, letterSpacing: "0.08em", color: "#F2E6C9", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,.6)", textAlign: "center", lineHeight: 1.3 }}>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, letterSpacing: "0.08em", color: "#F2E6C9", textTransform: "uppercase", textShadow: "0 1px 2px rgba(0,0,0,.6)", textAlign: "center", lineHeight: 1.3 }}>
           {isCorrect ? "Verdad" : "Errado"}
         </span>
       </div>
@@ -455,7 +456,7 @@ function CoinPill({ coins, onClick }) {
         display: "inline-flex", alignItems: "center", gap: 6,
         background: "rgba(240,200,105,.12)", border: "1px solid rgba(240,200,105,.4)",
         borderRadius: 999, padding: "6px 12px", cursor: "pointer",
-        fontFamily: "'Cinzel', serif", fontSize: 13, color: "#F0C869",
+        fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#F0C869",
       }}
     >
       <Coins size={14} /> {coins}
@@ -484,7 +485,7 @@ function AdModal({ onClose, onReward, rewardLabel }) {
             <X size={18} />
           </button>
         )}
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
           ANUNCIO RECOMPENSADO · DEMO
         </div>
         {!done ? (
@@ -500,7 +501,7 @@ function AdModal({ onClose, onReward, rewardLabel }) {
             <p style={{ color: "#EDE3CD", fontSize: 15, marginBottom: 18 }}>{rewardLabel}</p>
             <button
               onClick={onReward}
-              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
+              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
             >
               RECLAMAR
             </button>
@@ -528,7 +529,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
         <div style={{ width: 60, height: 60, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "4px auto 14px", boxShadow: "0 8px 22px rgba(201,162,39,.4)" }}>
           <Gift size={26} color="#241D0C" />
         </div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#F2E6C9", marginBottom: 6 }}>Bendición diaria</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#F2E6C9", marginBottom: 6 }}>Bendición diaria</div>
         <p style={{ color: "#9C927B", fontSize: 13.5, marginBottom: 20, lineHeight: 1.5 }}>Regresa cada día para hacer crecer tu racha y ganar más monedas.</p>
 
         <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 22 }}>
@@ -546,7 +547,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
                   opacity: isPast ? 0.55 : 1,
                 }}
               >
-                <div style={{ fontSize: 9.5, color: isToday ? "#F0C869" : "#8a8272", fontFamily: "'Cinzel', serif", marginBottom: 4 }}>D{day}</div>
+                <div style={{ fontSize: 9.5, color: isToday ? "#F0C869" : "#8a8272", fontFamily: "'Playfair Display', serif", marginBottom: 4 }}>D{day}</div>
                 <Coins size={13} color={isToday ? "#F0C869" : "#8a8272"} style={{ margin: "0 auto 3px", display: "block" }} />
                 <div style={{ fontSize: 10.5, color: isToday ? "#F2E6C9" : "#8a8272" }}>{r}</div>
               </div>
@@ -556,7 +557,7 @@ function DailyRewardModal({ streakDay, reward, onClaim, onClose }) {
 
         <button
           onClick={onClaim}
-          style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, padding: "13px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+          style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 14, fontWeight: 600, padding: "13px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
         >
           <Coins size={16} /> RECLAMAR {reward} MONEDAS
         </button>
@@ -585,7 +586,7 @@ function PaymentModal({ onClose, onSuccess, successText = "Compra añadida a tu 
             <X size={18} />
           </button>
         )}
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 12, letterSpacing: "0.1em", color: "#9C927B", marginBottom: 6 }}>
           PASARELA DE PAGO · DEMO
         </div>
         {status === "processing" ? (
@@ -598,11 +599,11 @@ function PaymentModal({ onClose, onSuccess, successText = "Compra añadida a tu 
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", margin: "18px auto" }}>
               <Check size={30} color="#241D0C" />
             </div>
-            <p style={{ color: "#F2E6C9", fontSize: 16, fontFamily: "'Cinzel', serif", marginBottom: 6 }}>¡Compra exitosa!</p>
+            <p style={{ color: "#F2E6C9", fontSize: 16, fontFamily: "'Playfair Display', serif", marginBottom: 6 }}>¡Compra exitosa!</p>
             <p style={{ color: "#9C927B", fontSize: 13.5, marginBottom: 18, lineHeight: 1.5 }}>{successText}</p>
             <button
               onClick={onSuccess}
-              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
+              style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.05em", fontWeight: 600, padding: "11px 22px", borderRadius: 999, border: "none", cursor: "pointer" }}
             >
               CONTINUAR
             </button>
@@ -662,7 +663,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,10,6,.82)", zIndex: 90, overflowY: "auto", padding: "40px 18px" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: "#F2E6C9", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, color: "#F2E6C9", display: "flex", alignItems: "center", gap: 10 }}>
             <ShoppingBag size={20} /> Tienda
           </div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "#9C927B", cursor: "pointer" }}>
@@ -671,11 +672,11 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(240,200,105,.08)", border: "1px solid rgba(240,200,105,.25)", borderRadius: 12, padding: "14px 16px", marginBottom: 18, gap: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Cinzel', serif" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Playfair Display', serif" }}>
             <Coins size={18} /> {coins} monedas
           </div>
           {isPremium && (
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 12 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 12 }}>
               <Check size={14} /> Premium activo · sin anuncios
             </div>
           )}
@@ -693,7 +694,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
             <span style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "#C7BBA0" }}>
               <Crown size={14} color="#F0C869" /> Sin anuncios y revive al instante con Premium
             </span>
-            <span style={{ fontFamily: "'Cinzel', serif", fontSize: 11, color: "#F0C869", whiteSpace: "nowrap" }}>Ver &rsaquo;</span>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, color: "#F0C869", whiteSpace: "nowrap" }}>Ver &rsaquo;</span>
           </button>
         )}
 
@@ -710,7 +711,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                   padding: "10px 8px", borderRadius: 9, border: "none", cursor: "pointer",
                   background: activeTab ? "rgba(240,200,105,.16)" : "transparent",
                   color: activeTab ? "#F0C869" : "#9C927B",
-                  fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em",
+                  fontFamily: "'Playfair Display', serif", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em",
                 }}
               >
                 <TabIcon size={14} /> {t.label}
@@ -721,7 +722,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "sellos" && (
           <div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               SELLOS DE CERA (con monedas ganadas jugando)
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -750,7 +751,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, ${t.colors[0]}, ${t.colors[1]} 75%)` }} />
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, ${t.colors[2]}, ${t.colors[3]} 75%)` }} />
                     </div>
-                    <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13.5, color: "#F2E6C9", marginBottom: 4 }}>{t.name}</div>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13.5, color: "#F2E6C9", marginBottom: 4 }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: active ? "#F0C869" : affordable ? "#9C927B" : "#C97A5E" }}>
                       {active ? "En uso" : t.cost === 0 ? "Incluido" : affordable ? `${t.cost} monedas` : `Faltan ${t.cost - coins} monedas`}
                     </div>
@@ -766,7 +767,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                 </div>
                 <button
                   onClick={() => goBuyCoins(shortfall.cost, shortfall)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 11.5, fontWeight: 600, padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 11.5, fontWeight: 600, padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   <Coins size={13} /> Comprar monedas
                 </button>
@@ -777,7 +778,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "monedas" && (
           <div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               PAQUETES DE MONEDAS (dinero real)
             </div>
             {suggestedPkgId && (
@@ -801,19 +802,19 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                     }}
                   >
                     {suggested ? (
-                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Cinzel', serif", color: "#241D0C", background: "#F0C869", borderRadius: 999, padding: "2px 7px" }}>
+                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Playfair Display', serif", color: "#241D0C", background: "#F0C869", borderRadius: 999, padding: "2px 7px" }}>
                         Te alcanza
                       </div>
                     ) : p.bonus > 0 && (
-                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Cinzel', serif", color: "#F0C869", background: "rgba(240,200,105,.14)", border: "1px solid rgba(240,200,105,.35)", borderRadius: 999, padding: "2px 7px" }}>
+                      <div style={{ position: "absolute", top: 10, right: 10, fontSize: 10, fontFamily: "'Playfair Display', serif", color: "#F0C869", background: "rgba(240,200,105,.14)", border: "1px solid rgba(240,200,105,.35)", borderRadius: 999, padding: "2px 7px" }}>
                         +{p.bonus} extra
                       </div>
                     )}
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                       <Coins size={20} color="#F0C869" />
-                      <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#F2E6C9" }}>{total}</span>
+                      <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: "#F2E6C9" }}>{total}</span>
                     </div>
-                    <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: "#F2E6C9", marginBottom: 4 }}>{p.label}</div>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#F2E6C9", marginBottom: 4 }}>{p.label}</div>
                     <div style={{ fontSize: 12.5, color: "#9C927B" }}>{p.price}</div>
                   </button>
                 );
@@ -824,11 +825,11 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "premium" && (
           <div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               PAQUETE PREMIUM (dinero real)
             </div>
             <div style={{ padding: 16, borderRadius: 12, border: `1.5px ${isPremium ? "solid" : "dashed"} ${isPremium ? "#F0C869" : "rgba(237,227,205,.25)"}`, background: isPremium ? "rgba(240,200,105,.08)" : "transparent" }}>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
                 Sin anuncios + 500 monedas
                 {isPremium && <Check size={15} color="#F0C869" />}
               </div>
@@ -840,7 +841,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
               {!isPremium && (
                 <button
                   onClick={onOpenPurchase}
-                  style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+                  style={{ background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
                 >
                   $2.99 — Comprar (simulado)
                 </button>
@@ -851,17 +852,17 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 
         {tab === "anuncios" && (
           <div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#9C927B", marginBottom: 12 }}>
               ANUNCIOS RECOMPENSADOS
             </div>
             <div style={{ padding: 16, borderRadius: 12, border: "1.5px solid rgba(237,227,205,.18)", background: "rgba(237,227,205,.05)" }}>
               {isPremium ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 13.5 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13.5 }}>
                   <Check size={16} /> Con Premium activo no verás anuncios.
                 </div>
               ) : (
                 <>
-                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6 }}>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 14.5, color: "#F2E6C9", marginBottom: 6 }}>
                     Ve un anuncio y gana monedas
                   </div>
                   <div style={{ fontSize: 12.5, color: "#9C927B", lineHeight: 1.5, marginBottom: 12 }}>
@@ -869,7 +870,7 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
                   </div>
                   <button
                     onClick={onOpenAd}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 12.5, fontWeight: 600, padding: "10px 18px", borderRadius: 999, border: "none", cursor: "pointer" }}
                   >
                     <Gift size={14} /> Ver anuncio: +30 monedas
                   </button>
@@ -887,16 +888,31 @@ function Shop({ coins, themeId, onBuyTheme, onClose, onOpenAd, isPremium, onOpen
 /* TOP BAR — cabecera consistente de marca                             */
 /* ------------------------------------------------------------------ */
 
-function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOpenPremium, soundMuted, onToggleMute }) {
+function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOpenPremium, soundMuted, onToggleMute, musicOn, onToggleMusic }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 640, margin: "0 auto", padding: "0 4px 8px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ width: 28, height: 28, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Scroll size={14} color="#2c2211" />
         </div>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.08em", color: "#C7BBA0" }}>DESAFÍO BÍBLICO</span>
+        <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.08em", color: "#C7BBA0" }}>DESAFÍO BÍBLICO</span>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {onToggleMusic && (
+          <button
+            onClick={onToggleMusic}
+            aria-label={musicOn ? "Silenciar música" : "Activar música"}
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              width: 30, height: 30, borderRadius: "50%",
+              background: musicOn ? "rgba(240,200,105,.1)" : "rgba(237,227,205,.06)",
+              border: `1px solid ${musicOn ? "rgba(240,200,105,.35)" : "rgba(237,227,205,.15)"}`,
+              cursor: "pointer", color: musicOn ? "#F0C869" : "#8a8272",
+            }}
+          >
+            <Music size={14} />
+          </button>
+        )}
         {onToggleMute && (
           <button
             onClick={onToggleMute}
@@ -953,9 +969,213 @@ function TopBar({ coins, onOpenShop, canClaimDaily, onOpenDaily, isPremium, onOp
 /* SCREENS                                                             */
 /* ------------------------------------------------------------------ */
 
-function Backdrop({ children }) {
+/* ------------------------------------------------------------------ */
+/* HORIZONTE BÍBLICO — paisaje de fondo para toda la app               */
+/* Arte original en SVG: dunas, montañas y sol de atardecer            */
+/* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/* HORIZONTE BÍBLICO — paisaje de fondo, uno distinto por cada nivel   */
+/* Arte original en SVG, sin depender de imágenes externas             */
+/* ------------------------------------------------------------------ */
+
+const LANDSCAPE_THEMES = {
+  general: { sky: ["#1c140c", "#40301d", "#815a30", "#d6a04e"], sun: "#F8DE9E", stars: 0.5 },
+  origenes: { sky: ["#241a0c", "#5a3f1c", "#c98f2e", "#f3d488"], sun: "#FCEFC0", stars: 0.15 },
+  diluvio: { sky: ["#0e1a1c", "#1f3a3a", "#3f6660", "#8fae9c"], sun: "#DCE7D8", stars: 0.1 },
+  patriarcas: { sky: ["#140f10", "#3a2a22", "#6b4a2c", "#a9773c"], sun: "#F3D48F", stars: 0.75 },
+  exodo: { sky: ["#1c0d08", "#4a1a12", "#8a2f1e", "#d9622f"], sun: "#FCEFC0", stars: 0.1 },
+  jueces_reyes: { sky: ["#170a12", "#3a1526", "#5c2338", "#8a3450"], sun: "#E8B9C6", stars: 0.55 },
+  vida_jesus: { sky: ["#1c140c", "#40301d", "#815a30", "#d6a04e"], sun: "#F8DE9E", stars: 0.55 },
+  apostoles: { sky: ["#0c1a16", "#1f3a2e", "#3f6650", "#8fae6c"], sun: "#F3EBC0", stars: 0.15 },
+  sabiduria: { sky: ["#1a130a", "#453321", "#8a6a34", "#d9b45e"], sun: "#F6DE9E", stars: 0.3 },
+};
+
+function LandscapeForeground({ id }) {
+  switch (id) {
+    case "origenes":
+      return (
+        <g opacity="0.85">
+          <g stroke="#FCEFC0" strokeWidth="2" opacity="0.35">
+            {[20, 50, 80, 110, 140, 160].map((a) => {
+              const rad = (a * Math.PI) / 180;
+              const x1 = 500 + Math.cos(rad) * 220, y1 = 440 - Math.sin(rad) * 220;
+              const x2 = 500 + Math.cos(rad) * 270, y2 = 440 - Math.sin(rad) * 270;
+              return <line key={a} x1={x1} y1={y1} x2={x2} y2={y2} />;
+            })}
+          </g>
+          <path d="M210,618 C220,560 236,540 236,500" fill="none" stroke="#160f07" strokeWidth="6" opacity="0.9" />
+          <path d="M790,618 C780,560 764,540 764,500" fill="none" stroke="#160f07" strokeWidth="6" opacity="0.9" />
+          <path d="M236,510 C222,498 208,502 196,494" fill="none" stroke="#160f07" strokeWidth="4" opacity="0.75" />
+          <path d="M764,510 C778,498 792,502 804,494" fill="none" stroke="#160f07" strokeWidth="4" opacity="0.75" />
+        </g>
+      );
+    case "diluvio":
+      return (
+        <g>
+          <g stroke="#c8d8d2" strokeWidth="1.4" opacity="0.28">
+            <line x1="120" y1="40" x2="100" y2="100" />
+            <line x1="220" y1="20" x2="196" y2="86" />
+            <line x1="760" y1="30" x2="738" y2="94" />
+            <line x1="860" y1="50" x2="838" y2="112" />
+          </g>
+          <g stroke="#182c2a" strokeWidth="1.3" opacity="0.6" fill="none">
+            {[0, 1, 2, 3].map((i) => (
+              <path key={i} d={`M0,${590 + i * 20} Q140,${572 + i * 20} 280,${590 + i * 20} T560,${590 + i * 20} T840,${590 + i * 20} T1000,${590 + i * 20}`} />
+            ))}
+          </g>
+          <path d="M410,595 L590,595 L556,636 L444,636 Z" fill="#0c0f0e" opacity="0.92" />
+          <path d="M432,595 L432,556 L568,556 L568,595" fill="none" stroke="#0c0f0e" strokeWidth="5" opacity="0.9" />
+        </g>
+      );
+    case "patriarcas":
+      return (
+        <g opacity="0.92">
+          <path d="M290,618 L358,528 L426,618 Z" fill="#130d07" />
+          <path d="M320,618 L358,556 L396,618" fill="none" stroke="#0a0603" strokeWidth="2" opacity="0.7" />
+          <g fill="none" stroke="#130d07" strokeWidth="5" strokeLinecap="round">
+            <path d="M700,618 L700,560 Q690,540 706,524" />
+            <path d="M706,524 Q716,512 730,516" />
+            <path d="M700,560 L748,560 L748,618" />
+            <path d="M668,618 L668,588 M780,618 L780,588" strokeWidth="6" />
+          </g>
+        </g>
+      );
+    case "exodo":
+      return (
+        <g opacity="0.85">
+          <path d="M330,700 L330,260 Q360,230 330,205 Q302,182 330,150 L330,90 L285,90 L285,700 Z" fill="#0b1420" opacity="0.7" />
+          <path d="M670,700 L670,260 Q640,230 670,205 Q698,182 670,150 L670,90 L715,90 L715,700 Z" fill="#0b1420" opacity="0.7" />
+          <ellipse cx="500" cy="130" rx="46" ry="70" fill="#F3D08A" opacity="0.4" />
+        </g>
+      );
+    case "jueces_reyes":
+      return (
+        <g fill="#170a12" opacity="0.9">
+          <rect x="430" y="470" width="30" height="150" />
+          <rect x="540" y="470" width="30" height="150" />
+          <rect x="410" y="450" width="70" height="24" />
+          <rect x="520" y="450" width="70" height="24" />
+          <path d="M455,430 L500,388 L545,430 L520,430 L520,450 L480,450 L480,430 Z" />
+        </g>
+      );
+    case "vida_jesus":
+      return (
+        <g>
+          <g fill="#F8DE9E" opacity="0.85">
+            <polygon points="500,300 508,322 532,322 512,336 520,360 500,346 480,360 488,336 468,322 492,322" />
+          </g>
+          <g stroke="#170f08" strokeWidth="4" opacity="0.7">
+            <line x1="360" y1="618" x2="360" y2="548" />
+            <line x1="336" y1="572" x2="384" y2="572" />
+            <line x1="500" y1="618" x2="500" y2="524" />
+            <line x1="470" y1="556" x2="530" y2="556" />
+            <line x1="640" y1="618" x2="640" y2="548" />
+            <line x1="616" y1="572" x2="664" y2="572" />
+          </g>
+        </g>
+      );
+    case "apostoles":
+      return (
+        <g opacity="0.9">
+          <path d="M420,610 L580,610 L556,636 L444,636 Z" fill="#0c1611" />
+          <path d="M450,610 L450,562 L560,600 Z" fill="none" stroke="#0c1611" strokeWidth="4" opacity="0.85" />
+          <g stroke="#132018" strokeWidth="1.2" opacity="0.5" fill="none">
+            <path d="M0,600 Q150,586 300,600 T600,600 T900,600 T1000,596" />
+          </g>
+        </g>
+      );
+    case "sabiduria":
+      return (
+        <g opacity="0.9">
+          <rect x="420" y="560" width="160" height="22" rx="11" fill="#160f06" />
+          <rect x="434" y="536" width="132" height="30" rx="6" fill="#160f06" opacity="0.85" />
+          <path d="M660,560 Q650,528 674,510 Q664,532 682,544 Q662,546 656,562 Z" fill="#160f06" opacity="0.85" />
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+function Landscape({ id = "general" }) {
+  const theme = LANDSCAPE_THEMES[id] || LANDSCAPE_THEMES.general;
+  const [c1, c2, c3, c4] = theme.sky;
+  const gradId = `db-sky-${id}`;
+  const sunId = `db-sun-${id}`;
   return (
-    <div style={{ minHeight: "100%", width: "100%", background: "radial-gradient(ellipse at 50% -10%, #4a3420 0%, #2c2015 45%, #15100b 100%)", position: "relative", overflow: "hidden", fontFamily: "'Crimson Pro', serif", color: "#EDE3CD" }}>
+    <svg
+      viewBox="0 0 1000 700"
+      preserveAspectRatio="xMidYMax slice"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", transition: "opacity .5s ease" }}
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c1} />
+          <stop offset="42%" stopColor={c2} />
+          <stop offset="72%" stopColor={c3} />
+          <stop offset="100%" stopColor={c4} />
+        </linearGradient>
+        <radialGradient id={sunId} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={theme.sun} stopOpacity="0.95" />
+          <stop offset="55%" stopColor={theme.sun} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={theme.sun} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect width="1000" height="700" fill={`url(#${gradId})`} />
+
+      <g fill="#F6E7BE" opacity={theme.stars}>
+        <circle cx="70" cy="70" r="1.6" />
+        <circle cx="200" cy="45" r="1.2" />
+        <circle cx="330" cy="100" r="1.4" />
+        <circle cx="470" cy="35" r="1.1" />
+        <circle cx="600" cy="65" r="1.5" />
+        <circle cx="740" cy="40" r="1.2" />
+        <circle cx="860" cy="90" r="1.5" />
+        <circle cx="950" cy="55" r="1.3" />
+      </g>
+
+      {id !== "exodo" && (
+        <>
+          <circle cx="500" cy="440" r="210" fill={`url(#${sunId})`} />
+          <circle cx="500" cy="440" r="72" fill={theme.sun} opacity="0.88" />
+        </>
+      )}
+
+      <path
+        d="M0,480 L90,405 L170,458 L260,372 L345,438 L435,362 L525,445 L615,382 L705,452 L800,392 L900,448 L1000,415 L1000,700 L0,700 Z"
+        fill="#2c2015"
+        opacity="0.5"
+      />
+      <path
+        d="M0,545 Q130,468 250,530 T500,518 T750,540 T1000,505 L1000,700 L0,700 Z"
+        fill="#221809"
+        opacity="0.72"
+      />
+
+      <LandscapeForeground id={id} />
+
+      <path
+        d="M0,615 Q160,562 330,602 T660,592 T1000,612 L1000,700 L0,700 Z"
+        fill="#160f07"
+        opacity="0.9"
+      />
+    </svg>
+  );
+}
+
+function Backdrop({ children, landscapeId = "general" }) {
+  return (
+    <div style={{ minHeight: "100%", width: "100%", background: "#15100b", position: "relative", overflow: "hidden", fontFamily: "'Inter', sans-serif", color: "#EDE3CD" }}>
+      <Landscape id={landscapeId} />
+      <div
+        style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(180deg, rgba(12,8,5,.55) 0%, rgba(12,8,5,.15) 38%, rgba(12,8,5,.2) 70%, rgba(12,8,5,.6) 100%)",
+        }}
+      />
       <div
         style={{
           position: "absolute", inset: 0,
@@ -974,7 +1194,7 @@ function Backdrop({ children }) {
   );
 }
 
-function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQuestions, canClaimDaily, onOpenDaily, soundMuted, onToggleMute }) {
+function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQuestions, canClaimDaily, onOpenDaily, soundMuted, onToggleMute, musicOn, onToggleMusic }) {
   return (
     <div style={{ minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, opacity: 0.9 }}>
@@ -982,13 +1202,13 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
       </div>
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ paddingTop: 20 }}>
-          <TopBar coins={coins} onOpenShop={onOpenShop} isPremium={isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} />
+          <TopBar coins={coins} onOpenShop={onOpenShop} isPremium={isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} musicOn={musicOn} onToggleMusic={onToggleMusic} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 20px 60px", textAlign: "center", minHeight: "calc(100vh - 56px)" }}>
           <div style={{ width: 78, height: 78, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #E8C26D, #A9791F 75%)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, boxShadow: "0 8px 28px rgba(201,162,39,.4), inset 0 2px 4px rgba(255,255,255,.4)" }}>
             <Scroll size={36} color="#2c2211" />
           </div>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: "clamp(30px, 6vw, 48px)", letterSpacing: "0.03em", color: "#F2E6C9", textShadow: "0 2px 16px rgba(201,162,39,.3)", lineHeight: 1.15 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(30px, 6vw, 48px)", letterSpacing: "0.03em", color: "#F2E6C9", textShadow: "0 2px 16px rgba(201,162,39,.3)", lineHeight: 1.15 }}>
             DESAFÍO<br />BÍBLICO
           </div>
           <p style={{ marginTop: 16, maxWidth: 440, fontSize: 18, color: "#C7BBA0", lineHeight: 1.55 }}>
@@ -998,7 +1218,7 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
           </p>
           <button
             onClick={() => { playClick(); onStart(); }}
-            style={{ marginTop: 34, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 16, letterSpacing: "0.06em", fontWeight: 600, padding: "14px 32px", borderRadius: 999, border: "none", cursor: "pointer", boxShadow: "0 10px 26px rgba(201,162,39,.35)" }}
+            style={{ marginTop: 34, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 16, letterSpacing: "0.06em", fontWeight: 600, padding: "14px 32px", borderRadius: 999, border: "none", cursor: "pointer", boxShadow: "0 10px 26px rgba(201,162,39,.35)" }}
           >
             <Play size={18} fill="#241D0C" /> COMENZAR
           </button>
@@ -1009,14 +1229,14 @@ function Welcome({ onStart, coins, onOpenShop, isPremium, onOpenPremium, totalQu
   );
 }
 
-function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, onOpenDaily, soundMuted, onToggleMute }) {
+function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, onOpenDaily, soundMuted, onToggleMute, musicOn, onToggleMusic }) {
   const clearedCount = Object.keys(progress.completed).length;
   return (
     <div style={{ minHeight: "100vh", padding: "22px 18px 60px" }}>
-      <TopBar coins={progress.coins} onOpenShop={onOpenShop} isPremium={progress.isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} />
+      <TopBar coins={progress.coins} onOpenShop={onOpenShop} isPremium={progress.isPremium} onOpenPremium={onOpenPremium} canClaimDaily={canClaimDaily} onOpenDaily={onOpenDaily} soundMuted={soundMuted} onToggleMute={onToggleMute} musicOn={musicOn} onToggleMusic={onToggleMusic} />
 
       <div style={{ maxWidth: 640, margin: "6px auto 26px" }}>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: "clamp(22px, 4.5vw, 30px)", color: "#F2E6C9" }}>Mapa de niveles</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 4.5vw, 30px)", color: "#F2E6C9" }}>Mapa de niveles</div>
         <p style={{ color: "#9C927B", marginTop: 6, fontSize: 14 }}>{clearedCount} de {CATEGORIES.length} eras completadas · {CATEGORIES[0].questions.length} preguntas por nivel</p>
         <div style={{ height: 5, width: "100%", background: "rgba(237,227,205,.1)", borderRadius: 4, overflow: "hidden", marginTop: 12 }}>
           <div style={{ height: "100%", width: `${(clearedCount / CATEGORIES.length) * 100}%`, background: "linear-gradient(90deg, #E8C26D, #B4881F)", transition: "width .5s ease" }} />
@@ -1051,13 +1271,13 @@ function LevelMap({ progress, onPick, onOpenShop, onOpenPremium, canClaimDaily, 
                   <div style={{ width: 42, height: 42, borderRadius: 10, background: `${cat.accent}22`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {unlocked ? <Icon size={22} color={cat.accent} /> : <Lock size={20} color="#8a8272" />}
                   </div>
-                  <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, color: "#9C927B" }}>NIVEL {i + 1}</div>
+                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 11, color: "#9C927B" }}>NIVEL {i + 1}</div>
                 </div>
-                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 6 }}>{cat.name}</div>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 6 }}>{cat.name}</div>
                 <div style={{ fontSize: 13.5, color: "#9C927B", lineHeight: 1.4, marginBottom: 10 }}>{cat.subtitle}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   {cleared ? (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#5B7B5A", fontFamily: "'Cinzel', serif" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: "#5B7B5A", fontFamily: "'Playfair Display', serif" }}>
                       <Check size={13} /> COMPLETADO
                     </div>
                   ) : (
@@ -1198,22 +1418,22 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
       {reviveOffer && !showAd && !shopOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(15,10,6,.8)", zIndex: 95, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ maxWidth: 320, background: "linear-gradient(160deg, #3c2a1a, #1e150d)", border: "1px solid rgba(240,200,105,.3)", borderRadius: 16, padding: 26, textAlign: "center" }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 10 }}>Te quedaste sin vidas</div>
+            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, color: "#F2E6C9", marginBottom: 10 }}>Te quedaste sin vidas</div>
             <p style={{ color: "#9C927B", fontSize: 14, marginBottom: 18, lineHeight: 1.5 }}>
               {isPremium ? "Como usuario premium, revive al instante sin anuncios." : "Elegí cómo continuar el desafío con una vida extra."}
             </p>
             {isPremium ? (
-              <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 10 }}>
+              <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 10 }}>
                 <Sparkles size={15} /> REVIVIR AL INSTANTE
               </button>
             ) : (
               <>
-                <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 8 }}>
+                <button onClick={acceptRevive} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "none", cursor: "pointer", marginBottom: 8 }}>
                   <Gift size={15} /> VER ANUNCIO Y REVIVIR
                 </button>
 
                 {coins >= REVIVE_COST_COINS ? (
-                  <button onClick={reviveWithCoins} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(240,200,105,.12)", color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "1.5px solid rgba(240,200,105,.4)", cursor: "pointer", marginBottom: 10 }}>
+                  <button onClick={reviveWithCoins} style={{ width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, background: "rgba(240,200,105,.12)", color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13, fontWeight: 600, padding: "12px 18px", borderRadius: 999, border: "1.5px solid rgba(240,200,105,.4)", cursor: "pointer", marginBottom: 10 }}>
                     <Coins size={15} /> REVIVIR CON {REVIVE_COST_COINS} MONEDAS
                   </button>
                 ) : (
@@ -1221,14 +1441,14 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
                     <span style={{ fontSize: 11.5, color: "#8a8272", textAlign: "left" }}>
                       Revivir con monedas: faltan {REVIVE_COST_COINS - coins}
                     </span>
-                    <button onClick={() => onNeedCoins(REVIVE_COST_COINS)} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(240,200,105,.16)", color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    <button onClick={() => onNeedCoins(REVIVE_COST_COINS)} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(240,200,105,.16)", color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 11, fontWeight: 600, padding: "7px 11px", borderRadius: 999, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
                       <Coins size={12} /> Comprar
                     </button>
                   </div>
                 )}
               </>
             )}
-            <button onClick={declineRevive} style={{ width: "100%", background: "none", color: "#9C927B", fontFamily: "'Cinzel', serif", fontSize: 12.5, padding: "10px 18px", borderRadius: 999, border: "1px solid rgba(237,227,205,.2)", cursor: "pointer" }}>
+            <button onClick={declineRevive} style={{ width: "100%", background: "none", color: "#9C927B", fontFamily: "'Playfair Display', serif", fontSize: 12.5, padding: "10px 18px", borderRadius: 999, border: "1px solid rgba(237,227,205,.2)", cursor: "pointer" }}>
               Ver resultados
             </button>
           </div>
@@ -1241,8 +1461,8 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
             <LampLife key={i} lit={i < lives} />
           ))}
         </div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: "#9C927B", letterSpacing: "0.08em" }}>{category.name.toUpperCase()}</div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#F0C869" }}>{score} pts</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#9C927B", letterSpacing: "0.08em" }}>{category.name.toUpperCase()}</div>
+        <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: "#F0C869" }}>{score} pts</div>
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
@@ -1252,7 +1472,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
       </div>
 
       {streak >= 2 && (
-        <div style={{ marginBottom: 12, fontSize: 13, color: "#F0C869", fontFamily: "'Cinzel', serif", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ marginBottom: 12, fontSize: 13, color: "#F0C869", fontFamily: "'Playfair Display', serif", letterSpacing: "0.05em", display: "flex", alignItems: "center", gap: 6 }}>
           <Sparkles size={14} /> RACHA x{streak}
         </div>
       )}
@@ -1267,11 +1487,11 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
             <div style={{ height: "100%", width: `${pct}%`, background: pct > 30 ? accent : "#9B3A2E", transition: "width 1s linear" }} />
           </div>
 
-          <div style={{ fontSize: 11, letterSpacing: "0.12em", color: "#8a7550", fontFamily: "'Cinzel', serif", marginBottom: 10 }}>
+          <div style={{ fontSize: 11, letterSpacing: "0.12em", color: "#8a7550", fontFamily: "'Playfair Display', serif", marginBottom: 10 }}>
             PREGUNTA {idx + 1} DE {order.length}
           </div>
 
-          <div style={{ fontFamily: "'Crimson Pro', serif", fontSize: 22, fontWeight: 600, color: "#2C2211", lineHeight: 1.35, marginBottom: 22, minHeight: 62 }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 600, color: "#2C2211", lineHeight: 1.35, marginBottom: 22, minHeight: 62 }}>
             {current.q}
           </div>
 
@@ -1289,7 +1509,7 @@ function Game({ category, theme, onFinish, isPremium, coins, onSpendCoins, onNee
                   key={i}
                   disabled={!!status}
                   onClick={() => handleAnswer(i)}
-                  style={{ textAlign: "left", padding: "14px 14px", borderRadius: 10, background: bg, border: `1.5px solid ${border}`, color: "#2C2211", fontFamily: "'Crimson Pro', serif", fontSize: 15.5, fontWeight: 500, cursor: status ? "default" : "pointer", lineHeight: 1.3, transition: "background .2s ease, border-color .2s ease" }}
+                  style={{ textAlign: "left", padding: "14px 14px", borderRadius: 10, background: bg, border: `1.5px solid ${border}`, color: "#2C2211", fontFamily: "'Inter', sans-serif", fontSize: 15.5, fontWeight: 500, cursor: status ? "default" : "pointer", lineHeight: 1.3, transition: "background .2s ease, border-color .2s ease" }}
                 >
                   {opt}
                 </button>
@@ -1321,31 +1541,31 @@ function Results({ result, unlockedNext, onRestart, onMenu }) {
       <div style={{ width: 84, height: 84, borderRadius: "50%", background: won ? medal.grad : "radial-gradient(circle at 35% 30%, #b0503c, #6e2c1f 75%)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 22, boxShadow: "0 8px 24px rgba(0,0,0,.35)" }}>
         <Trophy size={36} color="#241D0C" />
       </div>
-      <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, letterSpacing: "0.12em", color: "#9C927B" }}>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, letterSpacing: "0.12em", color: "#9C927B" }}>
         {won ? medal.label.toUpperCase() : "EL SELLO SE ROMPIÓ"}
       </div>
-      <div style={{ fontFamily: "'Cinzel', serif", fontSize: "clamp(38px, 8vw, 56px)", color: "#F2E6C9", margin: "10px 0 6px" }}>{score}</div>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(38px, 8vw, 56px)", color: "#F2E6C9", margin: "10px 0 6px" }}>{score}</div>
       <div style={{ color: "#C7BBA0", fontSize: 16, marginBottom: 10 }}>{answered} de {total} preguntas respondidas</div>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 14, marginBottom: 6 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 14, marginBottom: 6 }}>
         <Coins size={16} /> +{coins} monedas ganadas
       </div>
       {won && perfectBonus > 0 && (
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Cinzel', serif", fontSize: 13, marginBottom: 6 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#F0C869", fontFamily: "'Playfair Display', serif", fontSize: 13, marginBottom: 6 }}>
           <Sparkles size={13} /> Racha perfecta: +{perfectBonus} monedas bono
         </div>
       )}
       {won && unlockedNext && (
-        <div style={{ color: "#5B7B5A", fontFamily: "'Cinzel', serif", fontSize: 13.5, marginTop: 4, marginBottom: 30, display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ color: "#5B7B5A", fontFamily: "'Playfair Display', serif", fontSize: 13.5, marginTop: 4, marginBottom: 30, display: "flex", alignItems: "center", gap: 6 }}>
           <Check size={15} /> Siguiente nivel desbloqueado
         </div>
       )}
       {!(won && unlockedNext) && <div style={{ marginBottom: 24 }} />}
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={() => { playClick(); onRestart(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "none", cursor: "pointer" }}>
+        <button onClick={() => { playClick(); onRestart(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(180deg, #E8C26D, #B4881F)", color: "#241D0C", fontFamily: "'Playfair Display', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "none", cursor: "pointer" }}>
           <RotateCcw size={16} /> JUGAR DE NUEVO
         </button>
-        <button onClick={() => { playClick(); onMenu(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: "#EDE3CD", fontFamily: "'Cinzel', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(237,227,205,.35)", cursor: "pointer" }}>
+        <button onClick={() => { playClick(); onMenu(); }} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: "#EDE3CD", fontFamily: "'Playfair Display', serif", fontSize: 14, letterSpacing: "0.05em", fontWeight: 600, padding: "13px 24px", borderRadius: 999, border: "1.5px solid rgba(237,227,205,.35)", cursor: "pointer" }}>
           MAPA DE NIVELES
         </button>
       </div>
@@ -1371,11 +1591,13 @@ export default function DesafioBiblico() {
   const [shopInitial, setShopInitial] = useState(null); // { tab, suggestedPkgId, origin } | null
   const [lastPurchaseAt, setLastPurchaseAt] = useState(0); // ticks on every completed purchase, lets Shop react to its own outcome
   const [soundMuted, setSoundMuted] = useState(false);
+  const [musicOn, setMusicOn] = useState(true);
 
   const [progress, setProgress] = useState({ ...DEFAULT_PROGRESS });
 
   useEffect(() => {
     setSoundMuted(loadMutePref());
+    setMusicOn(loadMusicPref());
     (async () => {
       const p = await loadProgress();
       setProgress(p);
@@ -1386,8 +1608,33 @@ export default function DesafioBiblico() {
     })();
   }, []);
 
+  // Las políticas de autoplay del navegador exigen un gesto del usuario antes
+  // de poder reproducir audio, así que arrancamos la música apenas ocurra la
+  // primera interacción (clic o toque) en cualquier parte de la app.
+  useEffect(() => {
+    if (!musicOn) return;
+    let started = false;
+    const tryStart = () => {
+      if (started) return;
+      started = true;
+      startMusic();
+      window.removeEventListener("pointerdown", tryStart);
+      window.removeEventListener("keydown", tryStart);
+    };
+    window.addEventListener("pointerdown", tryStart);
+    window.addEventListener("keydown", tryStart);
+    return () => {
+      window.removeEventListener("pointerdown", tryStart);
+      window.removeEventListener("keydown", tryStart);
+    };
+  }, [musicOn]);
+
   function handleToggleMute() {
     setSoundMuted(toggleMuted());
+  }
+
+  function handleToggleMusic() {
+    setMusicOn(toggleMusicEnabled());
   }
 
   function persist(next) {
@@ -1468,11 +1715,12 @@ export default function DesafioBiblico() {
 
   const activeTheme = THEMES.find((t) => t.id === progress.themeId) || THEMES[0];
   const unlockedNextAfterResult = result && category ? categoryIdx + 1 <= progress.unlockedIndex : false;
+  const activeLandscapeId = (screen === "game" || screen === "results") && category ? category.scene : "general";
 
   if (!loaded) {
     return (
       <Backdrop>
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#9C927B", fontFamily: "'Cinzel', serif", fontSize: 13, letterSpacing: "0.1em" }}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#9C927B", fontFamily: "'Playfair Display', serif", fontSize: 13, letterSpacing: "0.1em" }}>
           CARGANDO PERGAMINO…
         </div>
       </Backdrop>
@@ -1480,9 +1728,9 @@ export default function DesafioBiblico() {
   }
 
   return (
-    <Backdrop>
+    <Backdrop landscapeId={activeLandscapeId}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Crimson+Pro:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes sealPop { 0% { transform: scale(0.3) rotate(-8deg); opacity: 0; } 55% { transform: scale(1.06) rotate(1deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
         @keyframes spin { to { transform: rotate(360deg); } }
         .seal-stamp { animation: sealPop .24s cubic-bezier(.2,1.4,.4,1) both; }
@@ -1504,6 +1752,8 @@ export default function DesafioBiblico() {
           onOpenDaily={() => setShowDaily(true)}
           soundMuted={soundMuted}
           onToggleMute={handleToggleMute}
+          musicOn={musicOn}
+          onToggleMusic={handleToggleMusic}
         />
       )}
 
@@ -1516,6 +1766,8 @@ export default function DesafioBiblico() {
           onOpenDaily={() => setShowDaily(true)}
           soundMuted={soundMuted}
           onToggleMute={handleToggleMute}
+          musicOn={musicOn}
+          onToggleMusic={handleToggleMusic}
           onPick={(cat, i) => {
             setCategory(cat);
             setCategoryIdx(i);
